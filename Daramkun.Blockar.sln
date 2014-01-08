@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daramkun.Blockar", "Daramkun.Blockar\Daramkun.Blockar.csproj", "{BB0A24C3-04B3-4839-99F1-32BA79F9A2C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daramkun.Blockar.Test", "Daramkun.Blockar.Test\Daramkun.Blockar.Test.csproj", "{13093A75-87CB-404B-9852-59CC272C95CD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB0A24C3-04B3-4839-99F1-32BA79F9A2C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB0A24C3-04B3-4839-99F1-32BA79F9A2C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB0A24C3-04B3-4839-99F1-32BA79F9A2C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB0A24C3-04B3-4839-99F1-32BA79F9A2C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13093A75-87CB-404B-9852-59CC272C95CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13093A75-87CB-404B-9852-59CC272C95CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13093A75-87CB-404B-9852-59CC272C95CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13093A75-87CB-404B-9852-59CC272C95CD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
