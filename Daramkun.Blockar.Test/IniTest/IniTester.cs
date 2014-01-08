@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Daramkun.Blockar.Ini;
@@ -21,10 +22,14 @@ namespace Daramkun.Blockar.Test.IniTest
 			section.Add ( "ip", "123.123.123.123" );
 			section.Add ( "port", 12345 );
 
-			Console.WriteLine ( "=========== Original INI ===========" );
+			Console.WriteLine ( "=========== Object INI ===========" );
 			Console.WriteLine ( section );
 
-			Console.WriteLine ( "=========== Parsed INI ===========" );
+			Console.WriteLine ( "=========== Parsed from File ===========" );
+			foreach ( IniSection ini in IniParser.Parse ( Assembly.GetExecutingAssembly ().GetManifestResourceStream ( "Daramkun.Blockar.Test.ini1.ini" ) ) )
+				Console.WriteLine ( ini );
+
+			Console.WriteLine ( "=========== Parsed from Object ===========" );
 			foreach ( IniSection ini in IniParser.Parse ( section.ToString () ) )
 				Console.WriteLine ( ini );
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Daramkun.Blockar.Common;
 
 namespace Daramkun.Blockar.Ini
 {
@@ -26,13 +27,17 @@ namespace Daramkun.Blockar.Ini
 
 		public static IEnumerable<IniSection> Parse ( Stream stream )
 		{
-			StreamReader iniString = new StreamReader ( stream );
+			int skipByte;
+			Encoding encoding = EncodingChecker.Check ( stream, out skipByte );
+			stream.Position += skipByte;
+			StreamReader iniString = new StreamReader ( stream, encoding );
 			IniSection section = null;
 
 			while ( stream.CanRead && !iniString.EndOfStream )
 			{
 				int i = 0;
 				string line = iniString.ReadLine ();
+				if ( line.Length == 0 ) continue;
 				for ( ; i < line.Length; ++i )
 				{
 					char ch = line [ i ];

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Daramkun.Blockar.Common;
 
 namespace Daramkun.Blockar.Json
 {
@@ -104,7 +105,10 @@ namespace Daramkun.Blockar.Json
 			}
 			else
 			{
-				return ParseBinary ( new BinaryReader ( stream ) );
+				int skipByte;
+				Encoding encoding = EncodingChecker.Check ( stream, out skipByte );
+				if ( skipByte == 0 ) return ParseBinary ( new BinaryReader ( stream ) );
+				else { stream.Position += skipByte; return ParseString ( new BinaryReader ( stream, encoding ) ); }
 			}
 		}
 		public static JsonContainer Parse ( string str )

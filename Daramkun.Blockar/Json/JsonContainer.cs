@@ -61,6 +61,8 @@ namespace Daramkun.Blockar.Json
 
 		public object this [ object key ] { get { return container [ key ]; } set { container [ key ] = value; } }
 
+		public bool Contains ( object key ) { return container.Keys.Contains ( key ); }
+
 		public override string ToString ()
 		{
 			StringBuilder text = new StringBuilder ();

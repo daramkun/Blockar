@@ -27,6 +27,8 @@ namespace Daramkun.Blockar.Ini
 			set { container [ key ] = value; }
 		}
 
+		public bool Contains ( string key ) { return container.Keys.Contains ( key ); }
+
 		public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();

@@ -7,8 +7,8 @@
     <ProjectGuid>{13093A75-87CB-404B-9852-59CC272C95CD}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Daramkun.Data.Test</RootNamespace>
-    <AssemblyName>Daramkun.Data.Test</AssemblyName>
+    <RootNamespace>Daramkun.Blockar.Test</RootNamespace>
+    <AssemblyName>Daramkun.Blockar.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -51,6 +51,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <EmbeddedResource Include="json1.json" />
+    <EmbeddedResource Include="ini1.ini" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Daramkun.Blockar\Daramkun.Blockar.csproj">

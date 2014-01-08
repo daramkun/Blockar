@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Daramkun.Blockar.Json;
@@ -29,12 +30,15 @@ namespace Daramkun.Blockar.Test.JsonTest
 			json.Add ( phone, "phone" );
 			json.Add ( certification, "certification" );
 
+			Console.WriteLine ( "=========== Object Json ===========" );
+			Console.WriteLine ( json );
+
 			string jsonString = json.ToString ();
 
-			Console.WriteLine ( "=========== Original Json ===========" );
-			Console.WriteLine ( jsonString );
+			Console.WriteLine ( "=========== Parsed from String ===========" );
+			Console.WriteLine ( JsonParser.Parse ( Assembly.GetExecutingAssembly ().GetManifestResourceStream ( "Daramkun.Blockar.Test.json1.json" ) ) );
 
-			Console.WriteLine ( "=========== Parsed Json ===========" );
+			Console.WriteLine ( "=========== Parsed from Object ===========" );
 			Console.WriteLine ( JsonParser.Parse ( json.ToString () ) );
 
 			People myPeople = new People ()
