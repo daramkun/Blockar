@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Daramkun.Blockar.Ini
 {
-	public class IniSection
+	public class IniSection : IEnumerable<KeyValuePair<string, string>>
 	{
 		Dictionary<string, string> container;
 
@@ -36,6 +36,16 @@ namespace Daramkun.Blockar.Ini
 			foreach ( KeyValuePair<string, string> record in container )
 				sb.AppendLine ( string.Format ( record.Value.Contains ( ";" ) ? "{0}=\"{1}\"" : "{0}={1}", record.Key, record.Value ) );
 			return sb.ToString ();
+		}
+
+		public IEnumerator<KeyValuePair<string, string>> GetEnumerator ()
+		{
+			return container.GetEnumerator ();
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
+		{
+			return container.GetEnumerator ();
 		}
 	}
 }
