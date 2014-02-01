@@ -21,9 +21,9 @@ namespace Daramkun.Blockar.Json
 		{
 			if ( ContainerType == ContainType.Object && key == null )
 				throw new ArgumentNullException ( "If ContainType is Object then key must have any value." );
-			else if ( ContainerType == Json.ContainType.Object && key != null && key.GetType () != typeof ( string ) )
+			else if ( ContainerType == ContainType.Object && key != null && key.GetType () != typeof ( string ) )
 				throw new ArgumentException ( "If ContainType is Object then key type must be the 'string'." );
-			else if ( ContainerType == Json.ContainType.Array && key != null && key.GetType () != typeof ( int ) )
+			else if ( ContainerType == ContainType.Array && key != null && key.GetType () != typeof ( int ) )
 				throw new ArgumentException ( "If ContainType is Array then key type must be the 'int'." );
 			else
 			{

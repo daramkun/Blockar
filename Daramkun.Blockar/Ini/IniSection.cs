@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Daramkun.Blockar.Ini
 {
-	public class IniSection : IEnumerable<KeyValuePair<string, string>>
+	public sealed class IniSection : IIniSection, IEnumerable<KeyValuePair<string, string>>
 	{
 		Dictionary<string, string> container;
 
