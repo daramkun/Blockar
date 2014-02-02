@@ -124,8 +124,8 @@ namespace Daramkun.Blockar.Json
 					}
 
 					Type type = null;
-					if ( p is PropertyInfo ) type = ( p as PropertyInfo ).DeclaringType;
-					else type = ( p as FieldInfo ).DeclaringType;
+					if ( p is PropertyInfo ) type = ( p as PropertyInfo ).PropertyType;
+					else type = ( p as FieldInfo ).FieldType;
 
 					object d = null;
 					if ( type.GetInterfaces ().Contains ( typeof ( IEnumerable ) ) )

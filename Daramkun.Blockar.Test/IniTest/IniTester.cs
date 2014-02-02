@@ -33,6 +33,20 @@ namespace Daramkun.Blockar.Test.IniTest
 			foreach ( IniSection ini in IniParser.Parse ( section.ToString () ) )
 				Console.WriteLine ( ini );
 
+			Console.WriteLine ( "=========== Custom Json Object ===========" );
+			ConnectionInfo connInfo1 = new ConnectionInfo ()
+			{
+				Name = "Connection Info",
+				IPAddress = "127.0.0.1",
+				Port = 1234,
+				IsAlive = true,
+			}, connInfo2 = new ConnectionInfo ();
+
+			Console.WriteLine ( connInfo1 );
+
+			Console.WriteLine ( "=========== Custom Json Object to Custom Json Object by Json String ===========" );
+			Console.WriteLine ( connInfo2.FromIniSection ( connInfo1.ToIniSection () ).ToString () );
+
 			Console.WriteLine ( "=========== Benchmark ===========" );
 			int loopCount = 100000;
 			string iniString = section.ToString ();

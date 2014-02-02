@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IniTest\ConnectionInfo.cs" />
     <Compile Include="IniTest\IniTester.cs" />
     <Compile Include="JsonTest\People.cs" />
     <Compile Include="JsonTest\Phone.cs" />

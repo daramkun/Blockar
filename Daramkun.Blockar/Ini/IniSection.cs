@@ -47,5 +47,17 @@ namespace Daramkun.Blockar.Ini
 		{
 			return container.GetEnumerator ();
 		}
+
+		public IniSection ToIniSection ()
+		{
+			return this;
+		}
+
+		public IIniSection FromIniSection ( IniSection container )
+		{
+			Name = container.Name;
+			this.container = new Dictionary<string, string> ( container.container );
+			return this;
+		}
 	}
 }

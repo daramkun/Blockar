@@ -7,6 +7,9 @@ namespace Daramkun.Blockar.Ini
 {
 	public interface IIniSection
 	{
+		string Name { get; set; }
 
+		IniSection ToIniSection ();
+		IIniSection FromIniSection ( IniSection data );
 	}
 }
