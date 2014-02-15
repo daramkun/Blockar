@@ -26,7 +26,7 @@ namespace Daramkun.Blockar.Common
 			stream.Read ( buffer, 0, 4 );
 			stream.Position = currentPosition;
 
-			if ( CompareArray ( buffer, new byte [] { 0, 0, 0xFE, 0xFF } ) == 0 ) { encoding = Encoding.GetEncoding ( "utf-32" ); return; }
+			if ( CompareArray ( buffer, new byte [] { 0, 0, 0xFE, 0xFF } ) == 0 ) { encoding = Encoding.GetEncoding ( "utf-32BE" ); return; }
 			if ( CompareArray ( buffer, new byte [] { 0xFF, 0xFE, 0, 0 } ) == 0 ) { encoding = Encoding.GetEncoding ( "utf-32" ); return; }
 
 			skipByte = 2;
