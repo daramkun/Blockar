@@ -16,6 +16,7 @@ namespace Daramkun.Blockar.Json
 		public ContainType ContainerType { get; private set; }
 
 		public JsonContainer ( ContainType containerType ) { ContainerType = containerType; }
+		public JsonContainer ( Stream stream ) { FromJsonContainer ( JsonParser.Parse ( stream ) ); }
 
 		public void Add ( object value, object key = null )
 		{
@@ -65,7 +66,7 @@ namespace Daramkun.Blockar.Json
 
 		public override string ToString ()
 		{
-			if ( container.Count == 0 ) return "{ }";
+			if ( container.Count == 0 ) return ( ContainerType == ContainType.Object ) ? "{ }" : "[ ]";
 
 			StringBuilder text = new StringBuilder ();
 			foreach ( KeyValuePair<object, object> record in container )
