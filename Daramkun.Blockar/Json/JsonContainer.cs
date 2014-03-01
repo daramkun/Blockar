@@ -65,6 +65,8 @@ namespace Daramkun.Blockar.Json
 
 		public override string ToString ()
 		{
+			if ( container.Count == 0 ) return "{ }";
+
 			StringBuilder text = new StringBuilder ();
 			foreach ( KeyValuePair<object, object> record in container )
 			{
