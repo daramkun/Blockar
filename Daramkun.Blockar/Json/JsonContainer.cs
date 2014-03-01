@@ -73,7 +73,8 @@ namespace Daramkun.Blockar.Json
 			{
 				if ( ContainerType == ContainType.Object )
 					text.AppendFormat ( "\"{0}\" : ", record.Key );
-				if ( record.Value is string ) text.AppendFormat ( "\"{0}\", ", record.Value );
+				if ( record.Value is string ) text.AppendFormat ( "\"{0}\", ", ( record.Value as string ).Replace ( "\\", "\\\\" ).Replace ( "\n", "\\n" ).
+					Replace ( "\"", "\\\"" ).Replace ( "\r", "\\r" ) );
 				else if ( record.Value is bool ) text.AppendFormat ( "{0}, ", ( ( bool ) record.Value ) ? "true" : "false" );
 				else text.AppendFormat ( "{0}, ", record.Value ?? "null" );
 			}
