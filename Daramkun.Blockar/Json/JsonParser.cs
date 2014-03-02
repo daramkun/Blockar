@@ -141,7 +141,7 @@ namespace Daramkun.Blockar.Json
 			StringBuilder sb = new StringBuilder ();
 			while ( ( ch = jsonString.ReadChar () ) != '"' || !( ch == '"' && sb [ sb.Length - 1 ] != '\\' ) )
 				sb.Append ( ch );
-			return sb.ToString ();
+			return sb.ToString ().Replace ( "\\n", "\n" ).Replace ( "\\r", "\r" ).Replace ( "\\\"", "\"" ).Replace ( "\\\\", "\\" );
 		}
 
 		private static bool GetBooleanFromString ( BinaryReader jsonString, char ch )
