@@ -139,7 +139,7 @@ namespace Daramkun.Blockar.Json
 		{
 			char ch;
 			StringBuilder sb = new StringBuilder ();
-			while ( ( ch = jsonString.ReadChar () ) != '"' || !( ch == '"' && sb [ sb.Length - 1 ] != '\\' ) )
+			while ( ( ch = jsonString.ReadChar () ) != '"' || !( ch == '"' && ( sb.Length != 0 && sb [ sb.Length - 1 ] != '\\' ) ) )
 				sb.Append ( ch );
 			return sb.ToString ().Replace ( "\\n", "\n" ).Replace ( "\\r", "\r" ).Replace ( "\\\"", "\"" ).Replace ( "\\\\", "\\" );
 		}

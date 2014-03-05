@@ -15,6 +15,7 @@ namespace Daramkun.Blockar.Test.JsonTest
 		float height;
 		Phone phone;
 		string [] certifications;
+		string description;
 
 		public ContainType ContainerType { get { return ContainType.Object; } }
 
@@ -28,6 +29,10 @@ namespace Daramkun.Blockar.Test.JsonTest
 		public Phone Phone { get { return phone; } set { phone = value; } }
 		[Record ( "certification" )]
 		public string [] Certifications { get { return certifications; } set { certifications = value; } }
+		[Record ( "description" )]
+		public string Description { get { return description; } set { description = value; } }
+
+		public People () { Description = ""; }
 
 		public JsonContainer ToJsonContainer ()
 		{
@@ -46,6 +51,7 @@ namespace Daramkun.Blockar.Test.JsonTest
 			foreach ( object item in ( entry [ "certification" ] as JsonContainer ).GetListEnumerable () )
 				cert.Add ( item as string );
 			certifications = cert.ToArray ();
+			description = entry [ "description" ] as string;
 			return this;
 		}
 
