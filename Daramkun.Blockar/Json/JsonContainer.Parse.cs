@@ -8,7 +8,7 @@ using Daramkun.Blockar.Common;
 
 namespace Daramkun.Blockar.Json
 {
-	public static class JsonParser
+	partial class JsonContainer
 	{
 		private enum ParseState
 		{
@@ -21,7 +21,25 @@ namespace Daramkun.Blockar.Json
 			Value,
 		}
 
-		private static JsonContainer ParseString ( BinaryReader jsonString )
+		private enum BSONType
+		{
+			EndDoc = 0,
+			Double = 0x01,
+			String = 0x02,
+			Document = 0x03,
+			Array = 0x04,
+			BinaryData = 0x05,
+			Boolean = 0x08,
+			UTCTime = 0x09,
+			Null = 0x0A,
+			Regexp = 0x0B,
+			JavascriptCode = 0x0D,
+			JavascriptCodeWScope = 0x0F,
+			Integer = 0x10,
+			Integer64 = 0x12,
+		}
+
+		private JsonContainer ParseString ( BinaryReader jsonString )
 		{
 			ParseState parseMode = ParseState.None;
 			ParseState parseState = ParseState.None;
@@ -55,10 +73,10 @@ namespace Daramkun.Blockar.Json
 				else throw new ArgumentException ( "Invalid JSON document." );
 			}
 
-			return BuildAndReturn ( parseMode, tokenStack );
+			return Build ( parseMode, tokenStack );
 		}
 
-		private static JsonContainer ParseBinary ( BinaryReader jsonBinary, ParseState parseMode = ParseState.Object )
+		private JsonContainer ParseBinary ( BinaryReader jsonBinary, ParseState parseMode = ParseState.Object )
 		{
 			Queue<object> tokenStack = new Queue<object> ();
 			bool isParsing = true;
@@ -89,10 +107,10 @@ namespace Daramkun.Blockar.Json
 				}
 			}
 
-			return BuildAndReturn ( parseMode, tokenStack );
+			return Build ( parseMode, tokenStack );
 		}
 
-		public static JsonContainer Parse ( Stream stream )
+		public JsonContainer Parse ( Stream stream )
 		{
 			byte [] temp = new byte [ 1 ];
 			stream.Read ( temp, 0, 1 );
@@ -111,12 +129,8 @@ namespace Daramkun.Blockar.Json
 				else { stream.Position += skipByte; return ParseString ( new BinaryReader ( stream, encoding ) ); }
 			}
 		}
-		public static JsonContainer Parse ( string str )
-		{
-			return Parse ( new MemoryStream ( Encoding.UTF8.GetBytes ( str ) ) );
-		}
 
-		private static JsonContainer BuildAndReturn ( ParseState parseMode, Queue<object> tokenStack )
+		private JsonContainer Build ( ParseState parseMode, Queue<object> tokenStack )
 		{
 			JsonContainer container = new JsonContainer ( parseMode == ParseState.Object ? ContainType.Object : ContainType.Array );
 
@@ -135,7 +149,7 @@ namespace Daramkun.Blockar.Json
 		}
 
 		#region Get Data From String
-		private static string GetStringFromString ( BinaryReader jsonString )
+		private string GetStringFromString ( BinaryReader jsonString )
 		{
 			char ch;
 			StringBuilder sb = new StringBuilder ();
@@ -144,7 +158,7 @@ namespace Daramkun.Blockar.Json
 			return sb.ToString ().Replace ( "\\n", "\n" ).Replace ( "\\r", "\r" ).Replace ( "\\\"", "\"" ).Replace ( "\\\\", "\\" );
 		}
 
-		private static bool GetBooleanFromString ( BinaryReader jsonString, char ch )
+		private bool GetBooleanFromString ( BinaryReader jsonString, char ch )
 		{
 			StringBuilder sb = new StringBuilder ();
 			sb.Append ( ch );
@@ -164,7 +178,7 @@ namespace Daramkun.Blockar.Json
 			}
 		}
 
-		private static object GetNullFromString ( BinaryReader jsonString )
+		private object GetNullFromString ( BinaryReader jsonString )
 		{
 			StringBuilder sb = new StringBuilder ();
 			sb.Append ( 'n' );
@@ -179,7 +193,7 @@ namespace Daramkun.Blockar.Json
 			}
 		}
 
-		private static object GetNumberFromString ( BinaryReader jsonString, char ch )
+		private object GetNumberFromString ( BinaryReader jsonString, char ch )
 		{
 			StringBuilder sb = new StringBuilder ();
 			sb.Append ( ch );
@@ -207,7 +221,7 @@ namespace Daramkun.Blockar.Json
 				if ( int.TryParse ( sb.ToString (), out temp ) ) return temp;
 				else throw new Exception ( "Invalid JSON document." );
 			}
-			else 
+			else
 			{
 				double temp;
 				if ( double.TryParse ( sb.ToString (), out temp ) ) return temp;
@@ -217,7 +231,7 @@ namespace Daramkun.Blockar.Json
 		#endregion
 
 		#region Get Data From Binary
-		private static string GetKeyFromBinary ( BinaryReader jsonBinary )
+		private string GetKeyFromBinary ( BinaryReader jsonBinary )
 		{
 			StringBuilder sb = new StringBuilder ();
 			char ch;
@@ -226,13 +240,13 @@ namespace Daramkun.Blockar.Json
 			return sb.ToString ();
 		}
 
-		private static string GetStringFromBinary ( BinaryReader jsonBinary )
+		private string GetStringFromBinary ( BinaryReader jsonBinary )
 		{
 			int length = jsonBinary.ReadInt32 ();
 			return Encoding.UTF8.GetString ( jsonBinary.ReadBytes ( length ), 0, length - 1 );
 		}
 
-		private static byte [] GetBinaryFromBinary ( BinaryReader jsonBinary )
+		private byte [] GetBinaryFromBinary ( BinaryReader jsonBinary )
 		{
 			int length = jsonBinary.ReadInt32 ();
 			return jsonBinary.ReadBytes ( length );

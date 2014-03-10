@@ -7,7 +7,7 @@ using Daramkun.Blockar.Common;
 
 namespace Daramkun.Blockar.Ini
 {
-	public static class IniParser
+	partial class IniSection
 	{
 		private enum ParseState
 		{
@@ -19,13 +19,7 @@ namespace Daramkun.Blockar.Ini
 			Value,
 		}
 
-		public static IEnumerable<IniSection> Parse ( string ini )
-		{
-			foreach ( IniSection s in Parse ( new MemoryStream ( Encoding.UTF8.GetBytes ( ini ) ) ) )
-				yield return s;
-		}
-
-		public static IEnumerable<IniSection> Parse ( Stream stream )
+		public IniSection Parse ( Stream stream )
 		{
 			int skipByte;
 			Encoding encoding = EncodingChecker.Check ( stream, out skipByte );
@@ -47,7 +41,7 @@ namespace Daramkun.Blockar.Ini
 				if ( line [ i ] == ';' ) continue;
 				else if ( line [ i ] == '[' )
 				{
-					if ( section != null ) yield return section;
+					if ( section != null ) return section;
 					section = new IniSection ();
 					section.Name = GetSectionTitle ( line, i + 1 );
 				}
@@ -59,10 +53,10 @@ namespace Daramkun.Blockar.Ini
 				}
 			}
 
-			yield return section;
+			return section;
 		}
 
-		private static string GetSectionTitle ( string line, int startIndex )
+		private string GetSectionTitle ( string line, int startIndex )
 		{
 			StringBuilder sb = new StringBuilder ();
 			for ( ; startIndex < line.Length && line [ startIndex ] != ']'; ++startIndex )
@@ -70,16 +64,16 @@ namespace Daramkun.Blockar.Ini
 			return sb.ToString ();
 		}
 
-		private static string GetKey ( string line, ref int startIndex )
+		private string GetKey ( string line, ref int startIndex )
 		{
 			StringBuilder sb = new StringBuilder ();
-				for ( ; startIndex < line.Length && line [ startIndex ] != '='; ++startIndex )
-					sb.Append ( line [ startIndex ] );
+			for ( ; startIndex < line.Length && line [ startIndex ] != '='; ++startIndex )
+				sb.Append ( line [ startIndex ] );
 			++startIndex;
 			return sb.ToString ().Trim ();
 		}
 
-		private static string GetValue ( string line, int startIndex )
+		private string GetValue ( string line, int startIndex )
 		{
 			StringBuilder sb = new StringBuilder ();
 			for ( ; startIndex < line.Length; ++startIndex )

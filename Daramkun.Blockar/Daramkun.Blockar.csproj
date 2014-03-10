@@ -36,17 +36,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common\EncodingChecker.cs" />
-    <Compile Include="Ini\IIniSection.cs" />
-    <Compile Include="Ini\IniParser.cs" />
-    <Compile Include="Ini\IniProvider.cs" />
     <Compile Include="Ini\IniSection.cs" />
-    <Compile Include="Json\InnerArrayAttribute.cs" />
-    <Compile Include="Json\BSONType.cs" />
-    <Compile Include="Json\IJsonContainer.cs" />
-    <Compile Include="Json\JsonProvider.cs" />
     <Compile Include="Common\RecordAttribute.cs" />
+    <Compile Include="Ini\IniSection.Parse.cs">
+      <DependentUpon>IniSection.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ini\IniSection.Serializer.cs">
+      <DependentUpon>IniSection.cs</DependentUpon>
+    </Compile>
     <Compile Include="Json\JsonContainer.cs" />
-    <Compile Include="Json\JsonParser.cs" />
+    <Compile Include="Json\JsonContainer.Parse.cs">
+      <DependentUpon>JsonContainer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Json\JsonContainer.Serializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

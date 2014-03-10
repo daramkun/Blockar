@@ -6,13 +6,20 @@ using System.Text;
 
 namespace Daramkun.Blockar.Ini
 {
-	public sealed class IniSection : IIniSection, IEnumerable<KeyValuePair<string, string>>
+	public sealed partial class IniSection : IEnumerable<KeyValuePair<string, string>>
 	{
 		Dictionary<string, string> container;
 
 		public string Name { get; set; }
 
 		public IniSection () { container = new Dictionary<string, string> (); }
+		public IniSection ( string iniText ) : this ( new MemoryStream ( Encoding.UTF8.GetBytes ( iniText ) ) ) { }
+		public IniSection ( Stream stream )
+		{
+			IniSection section = Parse ( stream );
+			foreach ( KeyValuePair<string, string> i in section )
+				Add ( i.Key, i.Value );
+		}
 
 		public void Add ( string key, object value )
 		{
@@ -47,18 +54,6 @@ namespace Daramkun.Blockar.Ini
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
 		{
 			return container.GetEnumerator ();
-		}
-
-		public IniSection ToIniSection ()
-		{
-			return this;
-		}
-
-		public IIniSection FromIniSection ( IniSection container )
-		{
-			Name = container.Name;
-			this.container = new Dictionary<string, string> ( container.container );
-			return this;
 		}
 	}
 }

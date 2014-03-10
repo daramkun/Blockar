@@ -9,14 +9,21 @@ namespace Daramkun.Blockar.Json
 {
 	public enum ContainType { Unknown, Object, Array }
 
-	public sealed class JsonContainer : IJsonContainer
+	public sealed partial class JsonContainer
 	{
 		internal Dictionary<object, object> container = new Dictionary<object, object> ();
 
 		public ContainType ContainerType { get; private set; }
 
 		public JsonContainer ( ContainType containerType ) { ContainerType = containerType; }
-		public JsonContainer ( Stream stream ) { FromJsonContainer ( JsonParser.Parse ( stream ) ); }
+		public JsonContainer ( string jsonText ) : this ( new MemoryStream ( Encoding.UTF8.GetBytes ( jsonText ) ) ) { }
+		public JsonContainer ( byte [] data ) : this ( new MemoryStream ( data ) ) { }
+		public JsonContainer ( Stream stream )
+		{
+			JsonContainer parsed = Parse ( stream );
+			foreach ( KeyValuePair<object, object> i in parsed.GetDictionaryEnumerable () )
+				Add ( i.Value, i.Key );
+		}
 
 		public void Add ( object value, object key = null )
 		{
@@ -177,18 +184,6 @@ namespace Daramkun.Blockar.Json
 				return temp;
 			}
 			else throw new ArgumentException ( "key type must be 'int' or 'string'." );
-		}
-
-		public JsonContainer ToJsonContainer ()
-		{
-			return new JsonContainer ( ContainerType ) { container = new Dictionary<object, object> ( container ) };
-		}
-
-		public IJsonContainer FromJsonContainer ( JsonContainer container )
-		{
-			ContainerType = container.ContainerType;
-			this.container = new Dictionary<object, object> ( container.container );
-			return this;
 		}
 
 		public IEnumerable<object> GetListEnumerable () { return container.Values; }
