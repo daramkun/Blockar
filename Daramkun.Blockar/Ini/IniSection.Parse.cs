@@ -75,6 +75,8 @@ namespace Daramkun.Blockar.Ini
 
 		private string GetValue ( string line, int startIndex )
 		{
+			if ( line.Length == startIndex ) return "";
+
 			StringBuilder sb = new StringBuilder ();
 			for ( ; startIndex < line.Length; ++startIndex )
 			{
