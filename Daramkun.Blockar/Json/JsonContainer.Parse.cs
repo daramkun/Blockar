@@ -84,6 +84,8 @@ namespace Daramkun.Blockar.Json
 			while ( jsonBinary.BaseStream.CanRead && isParsing )
 			{
 				BSONType rb = ( BSONType ) jsonBinary.ReadByte ();
+				if ( rb == BSONType.EndDoc ) break;
+
 				if ( parseMode == ParseState.Object ) tokenStack.Enqueue ( GetKeyFromBinary ( jsonBinary ) );
 				else jsonBinary.ReadByte ();
 
@@ -153,9 +155,40 @@ namespace Daramkun.Blockar.Json
 		{
 			char ch;
 			StringBuilder sb = new StringBuilder ();
+			bool backslashMode = false;
 			while ( ( ch = jsonString.ReadChar () ) != '"' || !( ch == '"' && ( sb.Length != 0 && sb [ sb.Length - 1 ] != '\\' ) ) )
-				sb.Append ( ch );
-			return sb.ToString ().Replace ( "\\n", "\n" ).Replace ( "\\r", "\r" ).Replace ( "\\\"", "\"" ).Replace ( "\\\\", "\\" );
+			{
+				if ( sb.Length != 0 && sb [ sb.Length - 1 ] == '\\' && backslashMode )
+				{
+					switch ( ch )
+					{
+						case 'n': sb [ sb.Length - 1 ] = '\n'; break;
+						case 'r': sb [ sb.Length - 1 ] = '\r'; break;
+						case 't': sb [ sb.Length - 1 ] = '\t'; break;
+						case '/': sb [ sb.Length - 1 ] = '/'; break;
+						case 'b': sb [ sb.Length - 1 ] = '\b'; break;
+						case 'f': sb [ sb.Length - 1 ] = '\f'; break;
+						case '\\': sb [ sb.Length - 1 ] = '\\'; break;
+						case '"': sb [ sb.Length - 1 ] = '"'; break;
+						case 'u':
+							sb.Remove ( sb.Length - 1, 1 );
+							sb.Append ( ToNumberFromHexa ( jsonString.ReadBytes ( 2 ) ) );
+							sb.Append ( ToNumberFromHexa ( jsonString.ReadBytes ( 2 ) ) );
+							break;
+
+						default: throw new Exception ();
+					}
+					backslashMode = false;
+				}
+				else sb.Append ( ch );
+				if ( ch == '\\' && !backslashMode ) backslashMode = true;
+			}
+			return sb.ToString ();
+		}
+
+		private byte ToNumberFromHexa ( byte [] p )
+		{
+			return byte.Parse ( string.Format ( "0x{0}{1}", p [ 0 ], p [ 1 ] ) );
 		}
 
 		private bool GetBooleanFromString ( BinaryReader jsonString, char ch )
