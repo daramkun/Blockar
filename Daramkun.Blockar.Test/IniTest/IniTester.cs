@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -26,12 +27,17 @@ namespace Daramkun.Blockar.Test.IniTest
 			Console.WriteLine ( section );
 
 			Console.WriteLine ( "=========== Parsed from File ===========" );
-			foreach ( IniSection ini in IniParser.Parse ( Assembly.GetExecutingAssembly ().GetManifestResourceStream ( "Daramkun.Blockar.Test.ini1.ini" ) ) )
+			IniSection ini = null;
+			Stream stream = Assembly.GetExecutingAssembly ().GetManifestResourceStream ( "Daramkun.Blockar.Test.ini1.ini" );
+			while ( stream.Position != stream.Length )
+			{
+				ini = new IniSection ( stream );
 				Console.WriteLine ( ini );
+			}
 
 			Console.WriteLine ( "=========== Parsed from Object ===========" );
-			foreach ( IniSection ini in IniParser.Parse ( section.ToString () ) )
-				Console.WriteLine ( ini );
+			ini = new IniSection ( section.ToString () );
+			Console.WriteLine ( ini );
 
 			Console.WriteLine ( "=========== Custom Json Object ===========" );
 			ConnectionInfo connInfo1 = new ConnectionInfo ()
@@ -45,7 +51,7 @@ namespace Daramkun.Blockar.Test.IniTest
 			Console.WriteLine ( connInfo1 );
 
 			Console.WriteLine ( "=========== Custom Json Object to Custom Json Object by Json String ===========" );
-			Console.WriteLine ( connInfo2.FromIniSection ( connInfo1.ToIniSection () ).ToString () );
+			//Console.WriteLine ( connInfo2.FromIniSection ( connInfo1.ToIniSection () ).ToString () );
 
 			Console.WriteLine ( "=========== Benchmark ===========" );
 			int loopCount = 100000;
@@ -54,7 +60,7 @@ namespace Daramkun.Blockar.Test.IniTest
 			int start = Environment.TickCount;
 			for ( int i = 0; i < loopCount; i++ )
 			{
-				IniParser.Parse ( section.ToString () );
+				new IniSection ( section.ToString () );
 			}
 
 			int end = Environment.TickCount;

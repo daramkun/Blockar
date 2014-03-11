@@ -8,7 +8,7 @@ using Daramkun.Blockar.Ini;
 
 namespace Daramkun.Blockar.Test.IniTest
 {
-	public class ConnectionInfo : IIniSection
+	public class ConnectionInfo
 	{
 		public string Name { get; set; }
 
@@ -19,12 +19,9 @@ namespace Daramkun.Blockar.Test.IniTest
 		[Record]
 		public bool IsAlive { get; set; }
 
-		public IniSection ToIniSection () { return IniProvider.ToIniSection ( this ); }
-		public IIniSection FromIniSection ( IniSection data ) { IniProvider.FromIniSection ( this, data ); return this; }
-
 		public override string ToString ()
 		{
-			return ToIniSection ().ToString ();
+			return null;//ToIniSection ().ToString ();
 		}
 	}
 }

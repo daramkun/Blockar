@@ -21,8 +21,8 @@ namespace Daramkun.Blockar.Json
 		public JsonContainer ( Stream stream )
 		{
 			JsonContainer parsed = Parse ( stream );
-			foreach ( KeyValuePair<object, object> i in parsed.GetDictionaryEnumerable () )
-				Add ( i.Value, i.Key );
+			ContainerType = parsed.ContainerType;
+			container = parsed.container;
 		}
 
 		public void Add ( object value, object key = null )

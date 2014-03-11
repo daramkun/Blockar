@@ -8,7 +8,7 @@ using Daramkun.Blockar.Json;
 
 namespace Daramkun.Blockar.Test.JsonTest
 {
-	public class People : IJsonContainer
+	public class People
 	{
 		string name;
 		int age;
@@ -19,45 +19,24 @@ namespace Daramkun.Blockar.Test.JsonTest
 
 		public ContainType ContainerType { get { return ContainType.Object; } }
 
-		[Record ( "name" )]
+		[Record ( Name = "name" )]
 		public string Name { get { return name; } set { name = value; } }
-		[Record ( "age" )]
+		[Record ( Name = "age" )]
 		public int Age { get { return age; } set { age = value; } }
-		[Record ( "height" )]
+		[Record ( Name = "height" )]
 		public float Height { get { return height; } set { height = value; } }
-		[Record ( "phone" )]
+		[Record ( Name = "phone" )]
 		public Phone Phone { get { return phone; } set { phone = value; } }
-		[Record ( "certification" )]
+		[Record ( Name = "certification" )]
 		public string [] Certifications { get { return certifications; } set { certifications = value; } }
-		[Record ( "description" )]
+		[Record ( Name = "description" )]
 		public string Description { get { return description; } set { description = value; } }
 
 		public People () { Description = ""; }
 
-		public JsonContainer ToJsonContainer ()
-		{
-			return JsonProvider.ToJsonContainer ( this );
-		}
-
-		public IJsonContainer FromJsonContainer ( JsonContainer entry )
-		{
-			if ( entry == null ) throw new ArgumentNullException ();
-			Name = entry [ "name" ] as string;
-			Age = ( int ) entry [ "age" ];
-			Height = ( float ) entry [ "height" ];
-			Phone = new Phone ();
-			Phone.FromJsonContainer ( entry [ "phone" ] as JsonContainer );
-			List<string> cert = new List<string> ();
-			foreach ( object item in ( entry [ "certification" ] as JsonContainer ).GetListEnumerable () )
-				cert.Add ( item as string );
-			certifications = cert.ToArray ();
-			description = entry [ "description" ] as string;
-			return this;
-		}
-
 		public override string ToString ()
 		{
-			return ToJsonContainer ().ToString ();
+			return new JsonContainer ( this ).ToString ();
 		}
 	}
 }

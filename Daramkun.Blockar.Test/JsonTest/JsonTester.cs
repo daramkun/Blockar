@@ -36,10 +36,10 @@ namespace Daramkun.Blockar.Test.JsonTest
 			string jsonString = json.ToString ();
 
 			Console.WriteLine ( "=========== Parsed from String ===========" );
-			Console.WriteLine ( JsonParser.Parse ( Assembly.GetExecutingAssembly ().GetManifestResourceStream ( "Daramkun.Blockar.Test.json1.json" ) ) );
+			Console.WriteLine ( new JsonContainer ( Assembly.GetExecutingAssembly ().GetManifestResourceStream ( "Daramkun.Blockar.Test.json1.json" ) ) );
 
 			Console.WriteLine ( "=========== Parsed from Object ===========" );
-			Console.WriteLine ( JsonParser.Parse ( json.ToString () ) );
+			Console.WriteLine ( new JsonContainer ( json.ToString () ) );
 
 			People myPeople = new People ()
 			{
@@ -54,7 +54,7 @@ namespace Daramkun.Blockar.Test.JsonTest
 			Console.WriteLine ( myPeople );
 
 			Console.WriteLine ( "=========== Custom Json Object to Custom Json Object by Json String ===========" );
-			Console.WriteLine ( myPeople2.FromJsonContainer ( myPeople.ToJsonContainer () ).ToString () );
+			Console.WriteLine ( new JsonContainer ( new JsonContainer ( myPeople ).ToObject<People> () ).ToString () );
 
 			Console.WriteLine ( "=========== Benchmark ===========" );
 
@@ -62,7 +62,7 @@ namespace Daramkun.Blockar.Test.JsonTest
 
 			int start = Environment.TickCount;
 			for ( int i = 0; i < loopCount; i++ )
-				JsonParser.Parse ( jsonString );
+				new JsonContainer ( jsonString );
 			int end = Environment.TickCount;
 			Console.WriteLine ( String.Format ( "위 Json 데이터 {0:0,0}번 파싱하는데 걸린 시간 : {1:0.000}sec", loopCount, ( end - start ) / 1000.0f ) );
 		}

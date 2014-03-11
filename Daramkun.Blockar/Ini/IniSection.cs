@@ -8,11 +8,11 @@ namespace Daramkun.Blockar.Ini
 {
 	public sealed partial class IniSection : IEnumerable<KeyValuePair<string, string>>
 	{
-		Dictionary<string, string> container;
+		Dictionary<string, string> container = new Dictionary<string, string> ();
 
 		public string Name { get; set; }
 
-		public IniSection () { container = new Dictionary<string, string> (); }
+		public IniSection () { }
 		public IniSection ( string iniText ) : this ( new MemoryStream ( Encoding.UTF8.GetBytes ( iniText ) ) ) { }
 		public IniSection ( Stream stream )
 		{

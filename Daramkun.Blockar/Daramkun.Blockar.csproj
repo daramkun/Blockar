@@ -48,7 +48,9 @@
     <Compile Include="Json\JsonContainer.Parse.cs">
       <DependentUpon>JsonContainer.cs</DependentUpon>
     </Compile>
-    <Compile Include="Json\JsonContainer.Serializer.cs" />
+    <Compile Include="Json\JsonContainer.Serializer.cs">
+      <DependentUpon>JsonContainer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
