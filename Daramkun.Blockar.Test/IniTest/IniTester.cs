@@ -46,12 +46,12 @@ namespace Daramkun.Blockar.Test.IniTest
 				IPAddress = "127.0.0.1",
 				Port = 1234,
 				IsAlive = true,
-			}, connInfo2 = new ConnectionInfo ();
+			};
 
 			Console.WriteLine ( connInfo1 );
 
 			Console.WriteLine ( "=========== Custom Json Object to Custom Json Object by Json String ===========" );
-			//Console.WriteLine ( connInfo2.FromIniSection ( connInfo1.ToIniSection () ).ToString () );
+			Console.WriteLine ( new IniSection ( new IniSection ( connInfo1 ).ToObject<ConnectionInfo> () ).ToString () );
 
 			Console.WriteLine ( "=========== Benchmark ===========" );
 			int loopCount = 100000;

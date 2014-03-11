@@ -11,15 +11,15 @@ namespace Daramkun.Blockar.Json
 {
 	partial class JsonContainer
 	{
-		private void Serialize_AddData ( JsonContainer contain, object i, object key )
+		private void Serialize_AddData ( object i, object key )
 		{
-			if ( i == null ) contain.Add ( null, key );
+			if ( i == null ) Add ( null, key );
 			else if ( i is sbyte || i is byte || i is short || i is ushort || i is int || i is uint ||
 				i is long || i is ulong || i is bool || i is float || i is double || i is string )
-				contain.Add ( i, key );
+				Add ( i, key );
 			else if ( i is char || i is TimeSpan || i is DateTime || i is Regex || i is Enum )
-				contain.Add ( i.ToString (), key );
-			else contain.Add ( new JsonContainer ( i ), key );
+				Add ( i.ToString (), key );
+			else Add ( new JsonContainer ( i ), key );
 		}
 
 		private object Deserialize_GetData ( Type fieldType, object obj )
@@ -53,6 +53,9 @@ namespace Daramkun.Blockar.Json
 
 		public JsonContainer ( object obj )
 		{
+			if ( obj == null )
+				throw new ArgumentNullException ();
+
 			Type type = obj.GetType ();
 
 			if ( obj is IList )
@@ -60,7 +63,7 @@ namespace Daramkun.Blockar.Json
 				ContainerType = ContainType.Array;
 				foreach ( object i in obj as IList )
 				{
-					Serialize_AddData ( this, i, null );
+					Serialize_AddData ( i, null );
 				}
 			}
 			else
@@ -69,7 +72,7 @@ namespace Daramkun.Blockar.Json
 				if ( obj is IDictionary )
 				{
 					foreach ( DictionaryEntry i in obj as IDictionary )
-						Serialize_AddData ( this, i.Value, i.Key.ToString () );
+						Serialize_AddData ( i.Value, i.Key.ToString () );
 				}
 				else
 				{
@@ -78,14 +81,14 @@ namespace Daramkun.Blockar.Json
 						object [] attrs = field.GetCustomAttributes ( typeof ( RecordAttribute ), false );
 						if ( attrs.Length == 0 ) continue;
 						RecordAttribute attr = attrs.GetValue ( 0 ) as RecordAttribute;
-						Serialize_AddData ( this, field.GetValue ( obj ), attr.Name ?? field.Name );
+						Serialize_AddData ( field.GetValue ( obj ), attr.Name ?? field.Name );
 					}
 					foreach ( PropertyInfo prop in type.GetProperties () )
 					{
 						object [] attrs = prop.GetCustomAttributes ( typeof ( RecordAttribute ), false );
 						if ( attrs.Length == 0 ) continue;
 						RecordAttribute attr = attrs.GetValue ( 0 ) as RecordAttribute;
-						Serialize_AddData ( this, prop.GetValue ( obj, null ), attr.Name ?? prop.Name );
+						Serialize_AddData ( prop.GetValue ( obj, null ), attr.Name ?? prop.Name );
 					}
 				}
 			}

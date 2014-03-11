@@ -17,8 +17,8 @@ namespace Daramkun.Blockar.Ini
 		public IniSection ( Stream stream )
 		{
 			IniSection section = Parse ( stream );
-			foreach ( KeyValuePair<string, string> i in section )
-				Add ( i.Key, i.Value );
+			Name = section.Name;
+			container = section.container;
 		}
 
 		public void Add ( string key, object value )

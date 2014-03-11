@@ -21,7 +21,7 @@ namespace Daramkun.Blockar.Test.IniTest
 
 		public override string ToString ()
 		{
-			return null;//ToIniSection ().ToString ();
+			return new IniSection ( this ).ToString ();
 		}
 	}
 }

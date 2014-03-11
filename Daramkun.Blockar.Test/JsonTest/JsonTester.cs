@@ -48,7 +48,7 @@ namespace Daramkun.Blockar.Test.JsonTest
 				Height = 168.7f,
 				Phone = new Phone () { Type = "Smartphone", Platform = "Windows Phone", Name = "HTC 7 Mozart", Number = "010-xxxx-xxxx" },
 				Certifications = new string [] { "Word Processor", "Expert of Game Programming", "ITQ PowerPoint" }
-			}, myPeople2 = new People ();
+			};
 
 			Console.WriteLine ( "=========== Custom Json Object ===========" );
 			Console.WriteLine ( myPeople );
