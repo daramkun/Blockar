@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Daramkun.Blockar.Common;
 
 namespace Daramkun.Blockar.Json
@@ -16,7 +17,8 @@ namespace Daramkun.Blockar.Json
 			else if ( i is sbyte || i is byte || i is short || i is ushort || i is int || i is uint ||
 				i is long || i is ulong || i is bool || i is float || i is double || i is string )
 				contain.Add ( i, key );
-			else if ( i is char || i is TimeSpan || i is DateTime ) contain.Add ( i.ToString (), key );
+			else if ( i is char || i is TimeSpan || i is DateTime || i is Regex || i is Enum )
+				contain.Add ( i.ToString (), key );
 			else contain.Add ( new JsonContainer ( i ), key );
 		}
 
@@ -42,6 +44,9 @@ namespace Daramkun.Blockar.Json
 			}
 			else if ( fieldType == typeof ( TimeSpan ) ) return TimeSpan.Parse ( obj as string );
 			else if ( fieldType == typeof ( DateTime ) ) return Convert.ToDateTime ( obj );
+			else if ( fieldType == typeof ( Regex ) ) return new Regex ( obj as string );
+			else if ( fieldType.IsSubclassOf ( typeof ( Enum ) ) || fieldType == typeof ( Enum ) )
+				return Enum.Parse ( fieldType, obj as string, false );
 			else if ( obj is JsonContainer ) return ( obj as JsonContainer ).ToObject ( fieldType );
 			else return null;
 		}
