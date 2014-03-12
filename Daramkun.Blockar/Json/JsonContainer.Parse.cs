@@ -66,8 +66,7 @@ namespace Daramkun.Blockar.Json
 					else throw new Exception ( "Invalid JSON document." );
 				}
 				else if ( rc == '"' ) tokenStack.Enqueue ( GetStringFromString ( jsonString ) );
-				else if ( rc == 't' || rc == 'f' ) tokenStack.Enqueue ( GetBooleanFromString ( jsonString, rc ) );
-				else if ( rc == 'n' ) tokenStack.Enqueue ( GetNullFromString ( jsonString ) );
+				else if ( rc == 't' || rc == 'f' || rc == 'n' ) tokenStack.Enqueue ( GetKeywordFromString ( jsonString, rc ) );
 				else if ( ( rc >= '0' && rc <= '9' ) || rc == '-' || rc == '+' ) tokenStack.Enqueue ( GetNumberFromString ( jsonString, rc ) );
 
 				else throw new ArgumentException ( "Invalid JSON document." );
@@ -156,8 +155,9 @@ namespace Daramkun.Blockar.Json
 			char ch;
 			StringBuilder sb = new StringBuilder ();
 			bool backslashMode = false;
-			while ( ( ch = jsonString.ReadChar () ) != '"' || !( ch == '"' && ( sb.Length != 0 && sb [ sb.Length - 1 ] != '\\' ) ) )
+			while ( true )
 			{
+				ch = jsonString.ReadChar ();
 				if ( sb.Length != 0 && sb [ sb.Length - 1 ] == '\\' && backslashMode )
 				{
 					switch ( ch )
@@ -165,11 +165,11 @@ namespace Daramkun.Blockar.Json
 						case 'n': sb [ sb.Length - 1 ] = '\n'; break;
 						case 'r': sb [ sb.Length - 1 ] = '\r'; break;
 						case 't': sb [ sb.Length - 1 ] = '\t'; break;
+						case '\\': sb [ sb.Length - 1 ] = '\\'; break;
+						case '"': sb [ sb.Length - 1 ] = '"'; break;
 						case '/': sb [ sb.Length - 1 ] = '/'; break;
 						case 'b': sb [ sb.Length - 1 ] = '\b'; break;
 						case 'f': sb [ sb.Length - 1 ] = '\f'; break;
-						case '\\': sb [ sb.Length - 1 ] = '\\'; break;
-						case '"': sb [ sb.Length - 1 ] = '"'; break;
 						case 'u':
 							sb.Remove ( sb.Length - 1, 1 );
 							sb.Append ( ToNumberFromHexa ( jsonString.ReadBytes ( 2 ) ) );
@@ -180,6 +180,8 @@ namespace Daramkun.Blockar.Json
 					}
 					backslashMode = false;
 				}
+				else if ( ch == '"' )
+					break;
 				else sb.Append ( ch );
 				if ( ch == '\\' && !backslashMode ) backslashMode = true;
 			}
@@ -191,38 +193,24 @@ namespace Daramkun.Blockar.Json
 			return byte.Parse ( string.Format ( "0x{0}{1}", p [ 0 ], p [ 1 ] ) );
 		}
 
-		private bool GetBooleanFromString ( BinaryReader jsonString, char ch )
+		private object GetKeywordFromString ( BinaryReader jsonString, char ch )
 		{
-			StringBuilder sb = new StringBuilder ();
-			sb.Append ( ch );
-			while ( true )
+			switch(ch)
 			{
-				sb.Append ( jsonString.ReadChar () );
-				if ( ch == 't' && sb.Length == 4 )
-				{
-					if ( sb.ToString () == "true" ) return true;
-					else throw new Exception ( "Invalid JSON document." );
-				}
-				else if ( ch == 'f' && sb.Length == 5 )
-				{
-					if ( sb.ToString () == "false" ) return false;
-					else throw new Exception ( "Invalid JSON document." );
-				}
-			}
-		}
-
-		private object GetNullFromString ( BinaryReader jsonString )
-		{
-			StringBuilder sb = new StringBuilder ();
-			sb.Append ( 'n' );
-			while ( true )
-			{
-				sb.Append ( jsonString.ReadChar () );
-				if ( sb.Length == 4 )
-				{
-					if ( sb.ToString () == "null" ) return true;
-					else throw new Exception ( "Invalid JSON document." );
-				}
+				case 't':
+					if ( Encoding.UTF8.GetString ( jsonString.ReadBytes ( 3 ), 0, 3 ) == "rue" )
+						return true;
+					goto default;
+				case 'f':
+					if ( Encoding.UTF8.GetString ( jsonString.ReadBytes ( 4 ), 0, 4 ) == "alse" )
+						return false;
+					goto default;
+				case 'n':
+					if ( Encoding.UTF8.GetString ( jsonString.ReadBytes ( 3 ), 0, 3 ) == "ull" )
+						return null;
+					goto default;
+				default:
+					throw new Exception ( "Invalid JSON document." );
 			}
 		}
 
