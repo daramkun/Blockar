@@ -39,24 +39,42 @@ namespace Daramkun.Blockar.Json
 			Integer64 = 0x12,
 		}
 
-		private static readonly byte [] TRUE_ARRAY = new byte [] { ( byte ) 'r', ( byte ) 'u', ( byte ) 'e' };
-		private static readonly byte [] FALSE_ARRAY = new byte [] { ( byte ) 'a', ( byte ) 'l', ( byte ) 's', ( byte ) 'e' };
-		private static readonly byte [] NULL_ARRAY = new byte [] { ( byte ) 'u', ( byte ) 'l', ( byte ) 'l' };
+		private static readonly char [] TRUE_ARRAY = new char [] { 'r', 'u', 'e' };
+		private static readonly char [] FALSE_ARRAY = new char [] { 'a', 'l', 's', 'e' };
+		private static readonly char [] NULL_ARRAY = new char [] { 'u', 'l', 'l' };
 
-		private JsonContainer ParseString ( BinaryReader jsonString )
+		private JsonContainer ParseString ( MyStringReader jsonString )
 		{
 			ParseState parseMode = ParseState.None;
 			ParseState parseState = ParseState.None;
 			Queue<object> tokenStack = new Queue<object> ();
 
-			while ( jsonString.BaseStream.CanRead )
+			while ( true )
 			{
-				char rc = jsonString.ReadChar ();
-				if ( rc == '{' || rc == '[' )
+				char rc = '\0';
+				do {
+					rc = jsonString.ReadChar ();
+				} while ( rc == ' ' || rc == '	' || rc == '　' || rc == '\n' || rc == '\r' );
+				
+				if ( rc == ':' )
+				{
+					if ( !( parseMode == ParseState.Object && parseState == ParseState.Key ) )
+						throw new Exception ( "Invalid JSON document." );
+					parseState = ParseState.Value;
+				}
+				else if ( rc == ',' )
+				{
+					if ( parseState != ParseState.Value ) throw new Exception ( "Invalid JSON document." );
+					parseState = ( parseMode == ParseState.Object ) ? ParseState.Key : ParseState.Value;
+				}
+				else if ( rc == '"' ) tokenStack.Enqueue ( GetStringFromString ( jsonString ) );
+				else if ( rc == 't' || rc == 'f' || rc == 'n' ) tokenStack.Enqueue ( GetKeywordFromString ( jsonString, rc ) );
+				else if ( ( rc >= '0' && rc <= '9' ) || rc == '-' || rc == '+' ) tokenStack.Enqueue ( GetNumberFromString ( jsonString, rc ) );
+				else if ( rc == '{' || rc == '[' )
 				{
 					if ( parseState == ParseState.Value )
 					{
-						jsonString.BaseStream.Position -= 1;
+						jsonString.Position -= 1;
 						tokenStack.Enqueue ( ParseString ( jsonString ) );
 					}
 					else
@@ -69,22 +87,6 @@ namespace Daramkun.Blockar.Json
 					}
 				}
 				else if ( ( rc == '}' && parseMode == ParseState.Object ) || ( rc == ']' && parseMode == ParseState.Array ) ) break;
-				else if ( rc == ' ' || rc == '	' || rc == '　' || rc == '\n' || rc == '\r' || rc == '\a' ) continue;
-				else if ( rc == ':' )
-				{
-					if ( !( parseMode == ParseState.Object && parseState == ParseState.Key ) )
-						throw new Exception ( "Invalid JSON document." );
-					parseState = ParseState.Value;
-				}
-				else if ( rc == ',' )
-				{
-					if ( parseState != ParseState.Value ) throw new Exception ( "Invalid JSON document." );
-					if ( parseMode == ParseState.Object ) parseState = ParseState.Key;
-				}
-				else if ( rc == '"' ) tokenStack.Enqueue ( GetStringFromString ( jsonString ) );
-				else if ( rc == 't' || rc == 'f' || rc == 'n' ) tokenStack.Enqueue ( GetKeywordFromString ( jsonString, rc ) );
-				else if ( ( rc >= '0' && rc <= '9' ) || rc == '-' || rc == '+' ) tokenStack.Enqueue ( GetNumberFromString ( jsonString, rc ) );
-
 				else throw new ArgumentException ( "Invalid JSON document." );
 			}
 
@@ -96,7 +98,7 @@ namespace Daramkun.Blockar.Json
 			Queue<object> tokenStack = new Queue<object> ();
 			bool isParsing = true;
 			int dataSize = jsonBinary.ReadInt32 ();
-			while ( jsonBinary.BaseStream.CanRead && isParsing )
+			while ( isParsing )
 			{
 				BSONType rb = ( BSONType ) jsonBinary.ReadByte ();
 				if ( rb == BSONType.EndDoc ) break;
@@ -136,14 +138,14 @@ namespace Daramkun.Blockar.Json
 			if ( temp [ 0 ] == ( byte ) '{' || temp [ 0 ] == ( byte ) '[' || temp [ 0 ] == ( byte ) ' ' || temp [ 0 ] == ( byte ) '	' ||
 				temp [ 0 ] == ( byte ) '\r' || temp [ 0 ] == ( byte ) '\n' )
 			{
-				return ParseString ( new BinaryReader ( stream ) );
+				return ParseString ( new MyStringReader ( stream ) );
 			}
 			else
 			{
 				int skipByte;
 				Encoding encoding = EncodingChecker.Check ( stream, out skipByte );
 				if ( skipByte == 0 ) return ParseBinary ( new BinaryReader ( stream ) );
-				else { stream.Position += skipByte; return ParseString ( new BinaryReader ( stream, encoding ) ); }
+				else { stream.Position += skipByte; return ParseString ( new MyStringReader ( stream, encoding ) ); }
 			}
 		}
 
@@ -166,7 +168,7 @@ namespace Daramkun.Blockar.Json
 		}
 
 		#region Get Data From String
-		private string GetStringFromString ( BinaryReader jsonString )
+		private string GetStringFromString ( MyStringReader jsonString )
 		{
 			char ch;
 			StringBuilder sb = new StringBuilder ();
@@ -174,7 +176,7 @@ namespace Daramkun.Blockar.Json
 			while ( true )
 			{
 				ch = jsonString.ReadChar ();
-				if ( sb.Length != 0 && sb [ sb.Length - 1 ] == '\\' && backslashMode )
+				if ( backslashMode )
 				{
 					switch ( ch )
 					{
@@ -188,53 +190,55 @@ namespace Daramkun.Blockar.Json
 						case 'f': sb [ sb.Length - 1 ] = '\f'; break;
 						case 'u':
 							sb.Remove ( sb.Length - 1, 1 );
-							sb.Append ( ToNumberFromHexa ( jsonString.ReadBytes ( 2 ) ) );
-							sb.Append ( ToNumberFromHexa ( jsonString.ReadBytes ( 2 ) ) );
+							sb.Append ( ToNumberFromHexa ( jsonString.ReadChars ( 2 ) ) );
+							sb.Append ( ToNumberFromHexa ( jsonString.ReadChars ( 2 ) ) );
 							break;
 
 						default: throw new Exception ();
 					}
 					backslashMode = false;
 				}
-				else if ( ch == '"' )
-					break;
-				else sb.Append ( ch );
-				if ( ch == '\\' && !backslashMode ) backslashMode = true;
+				else if ( ch == '"' ) break;
+				else
+				{
+					sb.Append ( ch );
+					if ( ch == '\\' ) backslashMode = true;
+				}
 			}
 			return sb.ToString ();
 		}
 
-		private byte ToNumberFromHexa ( byte [] p )
+		private byte ToNumberFromHexa ( char [] p )
 		{
 			return byte.Parse ( string.Format ( "0x{0}{1}", p [ 0 ], p [ 1 ] ) );
 		}
 
-		private bool CheckArray ( byte [] v1, byte [] v2 )
+		private bool CheckArray ( char [] v1, char [] v2 )
 		{
 			for ( int i = 0; i < v1.Length; ++i )
 				if ( v1 [ i ] != v2 [ i ] ) return false;
 			return true;
 		}
 
-		private object GetKeywordFromString ( BinaryReader jsonString, char ch )
+		private object GetKeywordFromString ( MyStringReader jsonString, char ch )
 		{
 			switch(ch)
 			{
 				case 't':
-					if ( CheckArray ( jsonString.ReadBytes ( 3 ), TRUE_ARRAY ) ) return true;
+					if ( CheckArray ( jsonString.ReadChars ( 3 ), TRUE_ARRAY ) ) return true;
 					goto default;
 				case 'f':
-					if ( CheckArray ( jsonString.ReadBytes ( 4 ), FALSE_ARRAY ) ) return false;
+					if ( CheckArray ( jsonString.ReadChars ( 4 ), FALSE_ARRAY ) ) return false;
 					goto default;
 				case 'n':
-					if ( CheckArray ( jsonString.ReadBytes ( 3 ), NULL_ARRAY ) ) return null;
+					if ( CheckArray ( jsonString.ReadChars ( 3 ), NULL_ARRAY ) ) return null;
 					goto default;
 				default:
 					throw new Exception ( "Invalid JSON document." );
 			}
 		}
 
-		private object GetNumberFromString ( BinaryReader jsonString, char ch )
+		private object GetNumberFromString ( MyStringReader jsonString, char ch )
 		{
 			StringBuilder sb = new StringBuilder ();
 			sb.Append ( ch );
@@ -246,7 +250,7 @@ namespace Daramkun.Blockar.Json
 				ch = jsonString.ReadChar ();
 				if ( !( ( ch >= '0' && ch <= '9' ) || ch == '.' || ( isFloatingPoint && ( ch == 'e' || ch == 'E' || ch == '-' || ch == '+' ) ) ) )
 				{
-					jsonString.BaseStream.Position -= 1;
+					jsonString.Position -= 1;
 					break;
 				}
 

@@ -36,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common\EncodingChecker.cs" />
+    <Compile Include="Common\MyStringReader.cs" />
     <Compile Include="Ini\IniSection.cs" />
     <Compile Include="Common\RecordAttribute.cs" />
     <Compile Include="Ini\IniSection.Parse.cs">
