@@ -56,6 +56,7 @@
     <None Include="App.config" />
     <EmbeddedResource Include="json1.json" />
     <EmbeddedResource Include="ini1.ini" />
+    <EmbeddedResource Include="Test.bson" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Daramkun.Blockar\Daramkun.Blockar.csproj">

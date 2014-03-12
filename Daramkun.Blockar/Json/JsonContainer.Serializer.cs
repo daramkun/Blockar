@@ -140,17 +140,17 @@ namespace Daramkun.Blockar.Json
 			}
 			else if ( ContainerType == ContainType.Array )
 			{
-				if ( type == typeof ( Array ) )
+				if ( type.IsSubclassOf ( typeof ( Array ) ) )
 				{
 					object obj = Activator.CreateInstance ( type, container.Count );
 					foreach ( KeyValuePair<object, object> i in container )
 					{
-						PropertyInfo prop = type.GetProperty ( "Item" );
-						prop.SetValue ( obj, Deserialize_GetData ( prop.PropertyType, i.Value ), new object [] { i.Key } );
+						MethodInfo method = type.GetMethod ( "Set" );
+						method.Invoke ( obj, new object [] { i.Key, i.Value } );
 					}
 					return obj;
 				}
-				else if ( type == typeof ( IList ) )
+				else if ( type.IsSubclassOf ( typeof ( IList ) ) )
 				{
 					object obj = Activator.CreateInstance ( type );
 					for ( int i = 0; i < container.Count; ++i )

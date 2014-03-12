@@ -56,6 +56,9 @@ namespace Daramkun.Blockar.Test.JsonTest
 			Console.WriteLine ( "=========== Custom Json Object to Custom Json Object by Json String ===========" );
 			Console.WriteLine ( new JsonContainer ( new JsonContainer ( myPeople ).ToObject<People> () ).ToString () );
 
+			Console.WriteLine ( "=========== BSON Test ===========" );
+			Console.WriteLine ( new JsonContainer ( Assembly.GetExecutingAssembly ().GetManifestResourceStream ( "Daramkun.Blockar.Test.Test.bson" ) ) );
+
 			Console.WriteLine ( "=========== Benchmark ===========" );
 
 			int loopCount = 100000;
