@@ -39,6 +39,10 @@ namespace Daramkun.Blockar.Json
 			Integer64 = 0x12,
 		}
 
+		private static readonly byte [] TRUE_ARRAY = new byte [] { ( byte ) 'r', ( byte ) 'u', ( byte ) 'e' };
+		private static readonly byte [] FALSE_ARRAY = new byte [] { ( byte ) 'a', ( byte ) 'l', ( byte ) 's', ( byte ) 'e' };
+		private static readonly byte [] NULL_ARRAY = new byte [] { ( byte ) 'u', ( byte ) 'l', ( byte ) 'l' };
+
 		private JsonContainer ParseString ( BinaryReader jsonString )
 		{
 			ParseState parseMode = ParseState.None;
@@ -48,22 +52,34 @@ namespace Daramkun.Blockar.Json
 			while ( jsonString.BaseStream.CanRead )
 			{
 				char rc = jsonString.ReadChar ();
-				if ( rc == '{' && parseState != ParseState.Value ) { parseMode = ParseState.Object; parseState = ParseState.Key; }
-				else if ( rc == '[' && parseState != ParseState.Value ) { parseMode = ParseState.Array; parseState = ParseState.Value; }
-				else if ( ( rc == '{' || rc == '[' ) && parseState == ParseState.Value )
+				if ( rc == '{' || rc == '[' )
 				{
-					jsonString.BaseStream.Position -= 1;
-					tokenStack.Enqueue ( ParseString ( jsonString ) );
+					if ( parseState == ParseState.Value )
+					{
+						jsonString.BaseStream.Position -= 1;
+						tokenStack.Enqueue ( ParseString ( jsonString ) );
+					}
+					else
+					{
+						switch ( rc )
+						{
+							case '{': parseMode = ParseState.Object; parseState = ParseState.Key; break;
+							case '[': parseMode = ParseState.Array; parseState = ParseState.Value; break;
+						}
+					}
 				}
-				else if ( ( rc == '}' && parseMode == ParseState.Object ) ) break;
-				else if ( ( rc == ']' && parseMode == ParseState.Array ) ) break;
+				else if ( ( rc == '}' && parseMode == ParseState.Object ) || ( rc == ']' && parseMode == ParseState.Array ) ) break;
 				else if ( rc == ' ' || rc == '	' || rc == '　' || rc == '\n' || rc == '\r' || rc == '\a' ) continue;
-				else if ( rc == ',' || rc == ':' )
+				else if ( rc == ':' )
 				{
-					if ( parseMode == ParseState.Object && parseState == ParseState.Value && rc == ',' ) parseState = ParseState.Key;
-					else if ( parseMode == ParseState.Object && parseState == ParseState.Key && rc == ':' ) parseState = ParseState.Value;
-					else if ( parseMode == ParseState.Array && parseState == ParseState.Value && rc == ',' ) parseState = ParseState.Value;
-					else throw new Exception ( "Invalid JSON document." );
+					if ( !( parseMode == ParseState.Object && parseState == ParseState.Key ) )
+						throw new Exception ( "Invalid JSON document." );
+					parseState = ParseState.Value;
+				}
+				else if ( rc == ',' )
+				{
+					if ( parseState != ParseState.Value ) throw new Exception ( "Invalid JSON document." );
+					if ( parseMode == ParseState.Object ) parseState = ParseState.Key;
 				}
 				else if ( rc == '"' ) tokenStack.Enqueue ( GetStringFromString ( jsonString ) );
 				else if ( rc == 't' || rc == 'f' || rc == 'n' ) tokenStack.Enqueue ( GetKeywordFromString ( jsonString, rc ) );
@@ -193,21 +209,25 @@ namespace Daramkun.Blockar.Json
 			return byte.Parse ( string.Format ( "0x{0}{1}", p [ 0 ], p [ 1 ] ) );
 		}
 
+		private bool CheckArray ( byte [] v1, byte [] v2 )
+		{
+			for ( int i = 0; i < v1.Length; ++i )
+				if ( v1 [ i ] != v2 [ i ] ) return false;
+			return true;
+		}
+
 		private object GetKeywordFromString ( BinaryReader jsonString, char ch )
 		{
 			switch(ch)
 			{
 				case 't':
-					if ( Encoding.UTF8.GetString ( jsonString.ReadBytes ( 3 ), 0, 3 ) == "rue" )
-						return true;
+					if ( CheckArray ( jsonString.ReadBytes ( 3 ), TRUE_ARRAY ) ) return true;
 					goto default;
 				case 'f':
-					if ( Encoding.UTF8.GetString ( jsonString.ReadBytes ( 4 ), 0, 4 ) == "alse" )
-						return false;
+					if ( CheckArray ( jsonString.ReadBytes ( 4 ), FALSE_ARRAY ) ) return false;
 					goto default;
 				case 'n':
-					if ( Encoding.UTF8.GetString ( jsonString.ReadBytes ( 3 ), 0, 3 ) == "ull" )
-						return null;
+					if ( CheckArray ( jsonString.ReadBytes ( 3 ), NULL_ARRAY ) ) return null;
 					goto default;
 				default:
 					throw new Exception ( "Invalid JSON document." );
