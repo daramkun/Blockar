@@ -15,6 +15,9 @@ namespace Daramkun.Blockar.Json
 
 		public ContainType ContainerType { get; private set; }
 
+		public static T ParseToObject<T> ( Stream stream ) { return new JsonContainer ( stream ).ToObject<T> (); }
+		public static JsonContainer GenerateFromObject<T> ( T obj ) { return new JsonContainer ( ( object ) obj ); }
+
 		public JsonContainer ( ContainType containerType ) { ContainerType = containerType; }
 		public JsonContainer ( string jsonText ) : this ( new MemoryStream ( Encoding.UTF8.GetBytes ( jsonText ) ) ) { }
 		public JsonContainer ( byte [] data ) : this ( new MemoryStream ( data ) ) { }

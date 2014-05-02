@@ -98,7 +98,8 @@ namespace Daramkun.Blockar.Json
 			Queue<object> tokenStack = new Queue<object> ();
 			bool isParsing = true;
 			int dataSize = jsonBinary.ReadInt32 ();
-			while ( isParsing )
+			int currentPosition = ( int ) jsonBinary.BaseStream.Position;
+			while ( isParsing && ( jsonBinary.BaseStream.Position - currentPosition ) != dataSize )
 			{
 				BSONType rb = ( BSONType ) jsonBinary.ReadByte ();
 				if ( rb == BSONType.EndDoc ) break;
