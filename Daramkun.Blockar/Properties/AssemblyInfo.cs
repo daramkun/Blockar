@@ -9,12 +9,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Daramkun.Blockar")]
 [assembly: AssemblyDescription("Simple Data parser & generator for .NET")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Daramkun's NEST")]
+[assembly: AssemblyCompany ( "DARAM WORLD" )]
 [assembly: AssemblyProduct ( "Daramkun.Blockar" )]
 [assembly: AssemblyCopyright("Copyright © 2014 Daramkun All Rights Reserved")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
-[assembly: NeutralResourcesLanguage("ko")]
+[assembly: NeutralResourcesLanguage ( "" )]
 
 // 어셈블리의 버전 정보는 다음 네 가지 값으로 구성됩니다.
 //
@@ -26,5 +26,5 @@ using System.Runtime.InteropServices;
 // 모든 값을 지정하거나 아래와 같이 '*'를 사용하여 빌드 번호 및 수정 버전이 자동으로 
 // 지정되도록 할 수 있습니다.
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.1.*")]
-[assembly: AssemblyFileVersion("2.0.1.0")]
+[assembly: AssemblyVersion ( "2.0.2.*" )]
+[assembly: AssemblyFileVersion ( "2.0.2.0" )]

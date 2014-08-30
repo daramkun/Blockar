@@ -140,30 +140,46 @@ namespace Daramkun.Blockar.Json
 			}
 			else if ( ContainerType == ContainType.Array )
 			{
-				if ( type.IsSubclassOf ( typeof ( Array ) ) )
+				if ( IsSubtypeOf ( type, typeof ( Array ) ) )
 				{
 					object obj = Activator.CreateInstance ( type, container.Count );
+					MethodInfo method = type.GetMethod ( "Set" );
 					foreach ( KeyValuePair<object, object> i in container )
 					{
-						MethodInfo method = type.GetMethod ( "Set" );
-						method.Invoke ( obj, new object [] { i.Key, i.Value } );
+						object temp = i.Value;
+						if ( temp is JsonContainer )
+							temp = ( temp as JsonContainer ).ToObject ( method.GetParameters () [ 1 ].ParameterType );
+						method.Invoke ( obj, new object [] { i.Key, temp } );
 					}
 					return obj;
 				}
-				else if ( type.IsSubclassOf ( typeof ( IList ) ) )
+				else if ( IsSubtypeOf ( type, typeof ( IList ) ) )
 				{
 					object obj = Activator.CreateInstance ( type );
 					for ( int i = 0; i < container.Count; ++i )
 						( obj as IList ).Add ( null );
+					PropertyInfo prop = type.GetProperty ( "Item" );
 					foreach ( KeyValuePair<object, object> i in container )
 					{
-						PropertyInfo prop = type.GetProperty ( "Item" );
 						prop.SetValue ( obj, Deserialize_GetData ( prop.PropertyType, i.Value ), new object [] { i.Key } );
 					}
 					return obj;
 				}
 			}
 			return null;
+		}
+
+		private static bool IsSubtypeOf ( Type majorType, Type minorType )
+		{
+			if ( majorType == minorType || majorType.IsSubclassOf ( minorType ) )
+				return true;
+			else if ( minorType.IsInterface )
+			{
+				foreach ( Type type in majorType.GetInterfaces () )
+					if ( type == minorType )
+						return true;
+			}
+			return false;
 		}
 	}
 }
