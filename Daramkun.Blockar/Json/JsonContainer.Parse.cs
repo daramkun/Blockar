@@ -45,89 +45,98 @@ namespace Daramkun.Blockar.Json
 
 		private JsonContainer ParseString ( MyStringReader jsonString )
 		{
-			ParseState parseMode = ParseState.None;
-			ParseState parseState = ParseState.None;
-			Queue<object> tokenStack = new Queue<object> ();
-
-			while ( true )
+			try
 			{
-				char rc = '\0';
-				do {
-					rc = jsonString.ReadChar ();
-				} while ( rc == ' ' || rc == '	' || rc == '　' || rc == '\n' || rc == '\r' );
-				
-				if ( rc == ':' )
+				ParseState parseMode = ParseState.None;
+				ParseState parseState = ParseState.None;
+				Queue<object> tokenStack = new Queue<object> ();
+
+				while ( true )
 				{
-					if ( !( parseMode == ParseState.Object && parseState == ParseState.Key ) )
-						throw new Exception ( "Invalid JSON document." );
-					parseState = ParseState.Value;
-				}
-				else if ( rc == ',' )
-				{
-					if ( parseState != ParseState.Value ) throw new Exception ( "Invalid JSON document." );
-					parseState = ( parseMode == ParseState.Object ) ? ParseState.Key : ParseState.Value;
-				}
-				else if ( rc == '"' ) tokenStack.Enqueue ( GetStringFromString ( jsonString ) );
-				else if ( rc == 't' || rc == 'f' || rc == 'n' ) tokenStack.Enqueue ( GetKeywordFromString ( jsonString, rc ) );
-				else if ( ( rc >= '0' && rc <= '9' ) || rc == '-' || rc == '+' ) tokenStack.Enqueue ( GetNumberFromString ( jsonString, rc ) );
-				else if ( rc == '{' || rc == '[' )
-				{
-					if ( parseState == ParseState.Value )
+					char rc = '\0';
+					do
 					{
-						jsonString.Position -= 1;
-						tokenStack.Enqueue ( ParseString ( jsonString ) );
+						rc = jsonString.ReadChar ();
+					} while ( rc == ' ' || rc == '	' || rc == '　' || rc == '\n' || rc == '\r' );
+
+					if ( rc == ':' )
+					{
+						if ( !( parseMode == ParseState.Object && parseState == ParseState.Key ) )
+							throw new Exception ( "Invalid JSON document." );
+						parseState = ParseState.Value;
 					}
-					else
+					else if ( rc == ',' )
 					{
-						switch ( rc )
+						if ( parseState != ParseState.Value ) throw new Exception ( "Invalid JSON document." );
+						parseState = ( parseMode == ParseState.Object ) ? ParseState.Key : ParseState.Value;
+					}
+					else if ( rc == '"' ) tokenStack.Enqueue ( GetStringFromString ( jsonString ) );
+					else if ( rc == 't' || rc == 'f' || rc == 'n' ) tokenStack.Enqueue ( GetKeywordFromString ( jsonString, rc ) );
+					else if ( ( rc >= '0' && rc <= '9' ) || rc == '-' || rc == '+' ) tokenStack.Enqueue ( GetNumberFromString ( jsonString, rc ) );
+					else if ( rc == '{' || rc == '[' )
+					{
+						if ( parseState == ParseState.Value )
 						{
-							case '{': parseMode = ParseState.Object; parseState = ParseState.Key; break;
-							case '[': parseMode = ParseState.Array; parseState = ParseState.Value; break;
+							jsonString.Position -= 1;
+							tokenStack.Enqueue ( ParseString ( jsonString ) );
+						}
+						else
+						{
+							switch ( rc )
+							{
+								case '{': parseMode = ParseState.Object; parseState = ParseState.Key; break;
+								case '[': parseMode = ParseState.Array; parseState = ParseState.Value; break;
+							}
 						}
 					}
+					else if ( ( rc == '}' && parseMode == ParseState.Object ) || ( rc == ']' && parseMode == ParseState.Array ) ) break;
+					else throw new ArgumentException ( "Invalid JSON document." );
 				}
-				else if ( ( rc == '}' && parseMode == ParseState.Object ) || ( rc == ']' && parseMode == ParseState.Array ) ) break;
-				else throw new ArgumentException ( "Invalid JSON document." );
-			}
 
-			return Build ( parseMode, tokenStack );
+				return Build ( parseMode, tokenStack );
+			}
+			catch { throw new ArgumentException ( "Invalid JSON document." ); }
 		}
 
 		private JsonContainer ParseBinary ( BinaryReader jsonBinary, ParseState parseMode = ParseState.Object )
 		{
-			Queue<object> tokenStack = new Queue<object> ();
-			bool isParsing = true;
-			int dataSize = jsonBinary.ReadInt32 ();
-			int currentPosition = ( int ) jsonBinary.BaseStream.Position;
-			while ( isParsing && ( jsonBinary.BaseStream.Position - currentPosition ) != dataSize )
+			try
 			{
-				BSONType rb = ( BSONType ) jsonBinary.ReadByte ();
-				if ( rb == BSONType.EndDoc ) break;
-
-				if ( parseMode == ParseState.Object ) tokenStack.Enqueue ( GetKeyFromBinary ( jsonBinary ) );
-				else jsonBinary.ReadByte ();
-
-				switch ( rb )
+				Queue<object> tokenStack = new Queue<object> ();
+				bool isParsing = true;
+				int dataSize = jsonBinary.ReadInt32 ();
+				int currentPosition = ( int ) jsonBinary.BaseStream.Position;
+				while ( isParsing && ( jsonBinary.BaseStream.Position - currentPosition ) != dataSize )
 				{
-					case BSONType.EndDoc: isParsing = false; break;
-					case BSONType.Double: tokenStack.Enqueue ( jsonBinary.ReadDouble () ); break;
-					case BSONType.String: tokenStack.Enqueue ( GetStringFromBinary ( jsonBinary ) ); break;
-					case BSONType.Document: tokenStack.Enqueue ( ParseBinary ( jsonBinary, ParseState.Object ) ); break;
-					case BSONType.Array: tokenStack.Enqueue ( ParseBinary ( jsonBinary, ParseState.Array ) ); break;
-					case BSONType.BinaryData: tokenStack.Enqueue ( GetBinaryFromBinary ( jsonBinary ) ); break;
-					case BSONType.Boolean: tokenStack.Enqueue ( jsonBinary.ReadByte () == 0 ? false : true ); break;
-					case BSONType.UTCTime: tokenStack.Enqueue ( DateTime.FromFileTimeUtc ( jsonBinary.ReadInt64 () ) ); break;
-					case BSONType.Null: tokenStack.Enqueue ( null ); break;
-					case BSONType.Regexp: tokenStack.Enqueue ( new Regex ( GetStringFromBinary ( jsonBinary ) ) ); break;
-					case BSONType.JavascriptCode: tokenStack.Enqueue ( GetStringFromBinary ( jsonBinary ) ); break;
-					case BSONType.Integer: tokenStack.Enqueue ( jsonBinary.ReadInt32 () ); break;
-					case BSONType.Integer64: tokenStack.Enqueue ( jsonBinary.ReadInt64 () ); break;
+					BSONType rb = ( BSONType ) jsonBinary.ReadByte ();
+					if ( rb == BSONType.EndDoc ) break;
 
-					default: throw new Exception ( "There is unsupport Data type." );
+					if ( parseMode == ParseState.Object ) tokenStack.Enqueue ( GetKeyFromBinary ( jsonBinary ) );
+					else jsonBinary.ReadByte ();
+
+					switch ( rb )
+					{
+						case BSONType.EndDoc: isParsing = false; break;
+						case BSONType.Double: tokenStack.Enqueue ( jsonBinary.ReadDouble () ); break;
+						case BSONType.String: tokenStack.Enqueue ( GetStringFromBinary ( jsonBinary ) ); break;
+						case BSONType.Document: tokenStack.Enqueue ( ParseBinary ( jsonBinary, ParseState.Object ) ); break;
+						case BSONType.Array: tokenStack.Enqueue ( ParseBinary ( jsonBinary, ParseState.Array ) ); break;
+						case BSONType.BinaryData: tokenStack.Enqueue ( GetBinaryFromBinary ( jsonBinary ) ); break;
+						case BSONType.Boolean: tokenStack.Enqueue ( jsonBinary.ReadByte () == 0 ? false : true ); break;
+						case BSONType.UTCTime: tokenStack.Enqueue ( DateTime.FromFileTimeUtc ( jsonBinary.ReadInt64 () ) ); break;
+						case BSONType.Null: tokenStack.Enqueue ( null ); break;
+						case BSONType.Regexp: tokenStack.Enqueue ( new Regex ( GetStringFromBinary ( jsonBinary ) ) ); break;
+						case BSONType.JavascriptCode: tokenStack.Enqueue ( GetStringFromBinary ( jsonBinary ) ); break;
+						case BSONType.Integer: tokenStack.Enqueue ( jsonBinary.ReadInt32 () ); break;
+						case BSONType.Integer64: tokenStack.Enqueue ( jsonBinary.ReadInt64 () ); break;
+
+						default: throw new Exception ( "There is unsupport Data type." );
+					}
 				}
-			}
 
-			return Build ( parseMode, tokenStack );
+				return Build ( parseMode, tokenStack );
+			}
+			catch { throw new ArgumentException ( "Invalid JSON document." ); }
 		}
 
 		public JsonContainer Parse ( Stream stream )
