@@ -21,39 +21,43 @@ namespace Daramkun.Blockar.Ini
 
 		public IniSection Parse ( Stream stream )
 		{
-			int skipByte;
-			Encoding encoding = EncodingChecker.Check ( stream, out skipByte );
-			stream.Position += skipByte;
-			StreamReader iniString = new StreamReader ( stream, encoding );
-			IniSection section = null;
-
-			while ( stream.CanRead && !iniString.EndOfStream )
+			try
 			{
-				int i = 0;
-				string line = iniString.ReadLine ();
-				if ( line.Length == 0 ) continue;
-				for ( ; i < line.Length; ++i )
-				{
-					char ch = line [ i ];
-					if ( ch != ' ' && ch != '	' && ch != '\a' && ch != '\r' )
-						break;
-				}
-				if ( line [ i ] == ';' ) continue;
-				else if ( line [ i ] == '[' )
-				{
-					if ( section != null ) return section;
-					section = new IniSection ();
-					section.Name = GetSectionTitle ( line, i + 1 );
-				}
-				else
-				{
-					string key = GetKey ( line, ref i );
-					string value = GetValue ( line, i );
-					section.Add ( key, value );
-				}
-			}
+				int skipByte;
+				Encoding encoding = EncodingChecker.Check ( stream, out skipByte );
+				stream.Position += skipByte;
+				StreamReader iniString = new StreamReader ( stream, encoding );
+				IniSection section = null;
 
-			return section;
+				while ( stream.CanRead && !iniString.EndOfStream )
+				{
+					int i = 0;
+					string line = iniString.ReadLine ();
+					if ( line.Length == 0 ) continue;
+					for ( ; i < line.Length; ++i )
+					{
+						char ch = line [ i ];
+						if ( ch != ' ' && ch != '	' && ch != '\a' && ch != '\r' )
+							break;
+					}
+					if ( line [ i ] == ';' ) continue;
+					else if ( line [ i ] == '[' )
+					{
+						if ( section != null ) return section;
+						section = new IniSection ();
+						section.Name = GetSectionTitle ( line, i + 1 );
+					}
+					else
+					{
+						string key = GetKey ( line, ref i );
+						string value = GetValue ( line, i );
+						section.Add ( key, value );
+					}
+				}
+
+				return section;
+			}
+			catch { throw new ArgumentException ( "Invalid INI document." ); }
 		}
 
 		private string GetSectionTitle ( string line, int startIndex )
