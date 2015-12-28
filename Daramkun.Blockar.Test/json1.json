@@ -10,5 +10,7 @@
 	"school" : {
 		"university" : "Chungnam National University",
 		"highschool" : "Korea Game Science Highschool"
-	}
+	},
+
+	"result" : {"status":"succeed","message":"login succeed.","result":{"nickname":"\ub2e4\ub78c\uad70","no":"6"}}
 }

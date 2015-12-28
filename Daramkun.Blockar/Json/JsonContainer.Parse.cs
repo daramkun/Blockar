@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -62,7 +63,7 @@ namespace Daramkun.Blockar.Json
 					if ( rc == ':' )
 					{
 						if ( !( parseMode == ParseState.Object && parseState == ParseState.Key ) )
-							throw new Exception ( "Invalid JSON document." );
+							throw new Exception ( "Invalid JSON document: Whe the Parse mode is Object, You must have key." );
 						parseState = ParseState.Value;
 					}
 					else if ( rc == ',' )
@@ -95,7 +96,7 @@ namespace Daramkun.Blockar.Json
 
 				return Build ( parseMode, tokenStack );
 			}
-			catch { throw new ArgumentException ( "Invalid JSON document." ); }
+			catch ( Exception ex ) { throw new ArgumentException ( "Invalid JSON document.", ex ); }
 		}
 
 		private JsonContainer ParseBinary ( BinaryReader jsonBinary, ParseState parseMode = ParseState.Object )
@@ -200,8 +201,10 @@ namespace Daramkun.Blockar.Json
 						case 'f': sb [ sb.Length - 1 ] = '\f'; break;
 						case 'u':
 							sb.Remove ( sb.Length - 1, 1 );
-							sb.Append ( ToNumberFromHexa ( jsonString.ReadChars ( 2 ) ) );
-							sb.Append ( ToNumberFromHexa ( jsonString.ReadChars ( 2 ) ) );
+							sb.Append ( ToCharFromHexa ( jsonString.ReadChars ( 4 ) ) );
+							break;
+						case 'x':
+							sb.Append ( ToCharFromHexa ( jsonString.ReadChars ( 2 ) ) );
 							break;
 
 						default: throw new Exception ();
@@ -218,9 +221,9 @@ namespace Daramkun.Blockar.Json
 			return sb.ToString ();
 		}
 
-		private byte ToNumberFromHexa ( char [] p )
+		private char ToCharFromHexa ( char [] p )
 		{
-			return byte.Parse ( string.Format ( "0x{0}{1}", p [ 0 ], p [ 1 ] ) );
+			return Convert.ToChar ( ushort.Parse ( string.Concat ( p ), NumberStyles.AllowHexSpecifier ) );
 		}
 
 		private bool CheckArray ( char [] v1, char [] v2 )
