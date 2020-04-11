@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
+    <RootNamespace>Daramee.Blockar</RootNamespace>
+    <PackageId>Daramee.Blockar</PackageId>
+    <Version>3.0.0</Version>
+    <Authors>Jin Jae-yeon</Authors>
+    <Company>DARAM WORLD</Company>
+    <Description>Markup Language Parser and Serializer</Description>
+    <Copyright>Copyright ⓒ 2014-2020 Jin Jae-yeon</Copyright>
+    <RepositoryUrl>git@github.com:daramkun/Blockar.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+</Project>
