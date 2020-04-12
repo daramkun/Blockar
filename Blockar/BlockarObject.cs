@@ -115,9 +115,11 @@ namespace Daramee.Blockar
 					: null;
 
 				string name = fieldOption?.Name ?? member.Name;
+#if !NET20
 				if (member.MemberType == MemberTypes.Property)
 					(member as PropertyInfo).SetValue (o, Get (name));
 				else
+#endif
 				{
 					FieldInfo fieldInfo = member as FieldInfo;
 					if (type.IsValueType)
@@ -171,10 +173,14 @@ namespace Daramee.Blockar
 					: null;
 
 				string name = fieldOption?.Name ?? member.Name;
+#if !NET20
 				if (member.MemberType == MemberTypes.Property)
 					bo.Set (name, (member as PropertyInfo).GetValue (obj));
 				else
+#endif
+				{
 					bo.Set (name, (member as FieldInfo).GetValue (obj));
+				}
 			}
 
 			return bo;

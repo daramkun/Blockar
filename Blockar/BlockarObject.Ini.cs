@@ -15,7 +15,11 @@ namespace Daramee.Blockar
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
 		public void SerializeToIni (Stream stream)
 		{
+#if NET20
+			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
+#else
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
+#endif
 				SerializeToIni (writer);
 		}
 
@@ -113,16 +117,20 @@ namespace Daramee.Blockar
 			}
 			return false;
 		}
-		#endregion
+#endregion
 
-		#region Deserialization
+#region Deserialization
 		/// <summary>
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="stream">JSON 데이터가 보관된 Stream 객체</param>
 		public void DeserializeFromIni (Stream stream, string sectionName)
 		{
+#if NET20
+			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true))
+#else
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true))
+#endif
 				DeserializeFromIni (reader, sectionName);
 		}
 
@@ -216,6 +224,6 @@ namespace Daramee.Blockar
 			}
 			return sb.ToString ().Trim ();
 		}
-		#endregion
+#endregion
 	}
 }

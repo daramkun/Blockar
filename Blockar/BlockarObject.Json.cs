@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+#if !NET20
 using System.Linq;
+#endif
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -11,14 +13,18 @@ namespace Daramee.Blockar
 {
 	partial class BlockarObject
 	{
-		#region Serialization
+#region Serialization
 		/// <summary>
 		/// JSON 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
 		public void SerializeToJson (Stream stream)
 		{
+#if NET20
+			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
+#else
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
+#endif
 			{
 				SerializeToJson (writer);
 			}
@@ -149,16 +155,20 @@ namespace Daramee.Blockar
 				FromObject (type, obj).SerializeToJson (writer);
 			}
 		}
-		#endregion
+#endregion
 
-		#region Deserialization
+#region Deserialization
 		/// <summary>
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="stream">JSON 데이터가 보관된 Stream 객체</param>
 		public void DeserializeFromJson (Stream stream)
 		{
+#if NET20
+			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true))
+#else
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true))
+#endif
 				DeserializeFromJson (reader);
 		}
 
@@ -212,7 +222,14 @@ namespace Daramee.Blockar
 		{
 			char ToCharFromHexa (char [] p, int length)
 			{
+#if NET20
+				StringBuilder builder = new StringBuilder ();
+				for (int i = 0; i < length; ++i)
+					builder.Append (p [i]);
+				return Convert.ToChar (ushort.Parse (builder.ToString (), NumberStyles.AllowHexSpecifier));
+#else
 				return Convert.ToChar (ushort.Parse (string.Concat (p.Take (length)), NumberStyles.AllowHexSpecifier));
+#endif
 			}
 
 			StringBuilder sb = new StringBuilder ();
@@ -450,6 +467,6 @@ namespace Daramee.Blockar
 			}
 			catch (Exception ex) { throw new ArgumentException ("Invalid JSON document.", ex); }
 		}
-		#endregion
+#endregion
 	}
 }

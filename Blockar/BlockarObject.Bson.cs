@@ -79,7 +79,11 @@ namespace Daramee.Blockar
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
 		public void SerializeToBson (Stream stream)
 		{
+#if NET20
+			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8))
+#else
 			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8, true))
+#endif
 			{
 				SerializeToBson (writer);
 			}
@@ -168,16 +172,20 @@ namespace Daramee.Blockar
 					break;
 			}
 		}
-		#endregion
+#endregion
 
-		#region Deserialization
+#region Deserialization
 		/// <summary>
 		/// BSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="stream">BSON 데이터가 보관된 Stream 객체</param>
 		public void DeserializeFromBson (Stream stream)
 		{
+#if NET20
+			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8))
+#else
 			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8, true))
+#endif
 				DeserializeFromBson (reader);
 		}
 
@@ -329,6 +337,6 @@ namespace Daramee.Blockar
 			int length = jsonBinary.ReadInt32 ();
 			return jsonBinary.ReadBytes (length);
 		}
-		#endregion
+#endregion
 	}
 }
