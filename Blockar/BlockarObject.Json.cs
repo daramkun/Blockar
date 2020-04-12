@@ -19,7 +19,9 @@ namespace Daramee.Blockar
 		public void SerializeToJson (Stream stream)
 		{
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
+			{
 				SerializeToJson (writer);
+			}
 		}
 
 		/// <summary>
@@ -44,15 +46,16 @@ namespace Daramee.Blockar
 			foreach (var obj in objs)
 			{
 				writer.Write ($"\"{obj.Key}\":");
-				ObjectToWriter (writer, obj.Value);
+				__JsonObjectToWriter (writer, obj.Value);
 
 				if (obj != objs [objs.Count - 1])
 					writer.Write (',');
 			}
 			writer.Write ('}');
+			writer.Flush ();
 		}
 
-		private void ObjectToWriter (TextWriter writer, object obj)
+		static void __JsonObjectToWriter (TextWriter writer, object obj)
 		{
 			Type type = obj.GetType ();
 			// Integers
@@ -74,7 +77,7 @@ namespace Daramee.Blockar
 				writer.Write ($"\"{obj:Thh:mm:ssZ}\"");
 			// Regular Expression to String
 			else if (type == typeof (Regex))
-				ObjectToWriter (writer, obj.ToString ());
+				__JsonObjectToWriter (writer, obj.ToString ());
 			// String
 			else if (type == typeof (string))
 			{
@@ -118,7 +121,7 @@ namespace Daramee.Blockar
 						writer.Write (',');
 					var value = dict [key];
 					writer.Write ($"\"{key}\":");
-					ObjectToWriter (writer, value);
+					__JsonObjectToWriter (writer, value);
 				}
 				writer.Write ('}');
 			}
@@ -131,7 +134,7 @@ namespace Daramee.Blockar
 				{
 					if (!isFirst)
 						writer.Write (',');
-					ObjectToWriter (writer, e);
+					__JsonObjectToWriter (writer, e);
 					isFirst = false;
 				}
 				writer.Write (']');
@@ -178,7 +181,7 @@ namespace Daramee.Blockar
 			Clear ();
 			char rc = __JsonPassWhitespaces (reader);
 			if (rc == '{')
-				InnerDeserializeObjectFromJson (this, reader);
+				__JsonInnerDeserializeObjectFromJson (this, reader);
 			else
 				throw new Exception ("Invalid JSON Object.");
 		}
@@ -324,7 +327,7 @@ namespace Daramee.Blockar
 			}
 		}
 
-		static void InnerDeserializeObjectFromJson (BlockarObject blockarObject, TextReader reader)
+		static void __JsonInnerDeserializeObjectFromJson (BlockarObject blockarObject, TextReader reader)
 		{
 			try
 			{
@@ -355,7 +358,7 @@ namespace Daramee.Blockar
 					else if (rc == '{')
 					{
 						BlockarObject inner = new BlockarObject ();
-						InnerDeserializeObjectFromJson (inner, reader);
+						__JsonInnerDeserializeObjectFromJson (inner, reader);
 						tokenStack.Enqueue (inner);
 					}
 					else if (rc == '[')
@@ -424,7 +427,7 @@ namespace Daramee.Blockar
 						if (parseState != JsonParseState.None)
 							throw new Exception ("Invalid JSON Document.");
 						BlockarObject inner = new BlockarObject ();
-						InnerDeserializeObjectFromJson (inner, reader);
+						__JsonInnerDeserializeObjectFromJson (inner, reader);
 						arr.Add (inner);
 						parseState = JsonParseState.Value;
 					}
