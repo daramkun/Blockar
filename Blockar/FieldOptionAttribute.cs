@@ -5,7 +5,11 @@ using System.Text.RegularExpressions;
 
 namespace Daramee.Blockar
 {
+#if NET20
+	[AttributeUsage (AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+#else
 	[AttributeUsage (AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+#endif
 	public class FieldOptionAttribute : Attribute
 	{
 		string name;
