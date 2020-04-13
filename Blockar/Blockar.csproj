@@ -11,6 +11,15 @@
     <Copyright>Copyright ⓒ 2014-2020 Jin Jae-yeon</Copyright>
     <RepositoryUrl>git@github.com:daramkun/Blockar.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/daramkun/Blockar</PackageProjectUrl>
+    <PackageLicenseFile>README.md</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
