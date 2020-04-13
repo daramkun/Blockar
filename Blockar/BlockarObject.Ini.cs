@@ -13,14 +13,14 @@ namespace Daramee.Blockar
 		/// INI 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
-		public void SerializeToIni (Stream stream)
+		public static void SerializeToIni (BlockarObject obj, Stream stream)
 		{
 #if NET20
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
 #else
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
 #endif
-				SerializeToIni (writer);
+				SerializeToIni (obj, writer);
 		}
 
 		/// <summary>
@@ -31,7 +31,7 @@ namespace Daramee.Blockar
 		{
 			StringBuilder builder = new StringBuilder ();
 			using (TextWriter writer = new StringWriter (builder))
-				SerializeToIni (writer);
+				SerializeToIni (this, writer);
 			return builder.ToString ();
 		}
 
@@ -39,15 +39,17 @@ namespace Daramee.Blockar
 		/// INI 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="writer">직렬화한 데이터를 보관할 TextWriter 객체</param>
-		public void SerializeToIni (TextWriter writer)
+		public static void SerializeToIni (BlockarObject obj, TextWriter writer)
 		{
-			writer.WriteLine ($"[{SectionName}]");
-			foreach (var obj in objs)
+			writer.WriteLine ($"[{obj.SectionName}]");
+			foreach (var innerObj in obj.objs)
 			{
-				writer.Write (obj.Key);
+				writer.Write (innerObj.Key);
 				writer.Write ('=');
-				__IniObjectToWriter (writer, obj.Value);
+				__IniObjectToWriter (writer, innerObj.Value);
+				writer.WriteLine ();
 			}
+			writer.WriteLine ();
 			writer.Flush ();
 		}
 
@@ -124,33 +126,33 @@ namespace Daramee.Blockar
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="stream">JSON 데이터가 보관된 Stream 객체</param>
-		public void DeserializeFromIni (Stream stream, string sectionName)
+		public static void DeserializeFromIni (BlockarObject obj, Stream stream, string sectionName)
 		{
 #if NET20
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true))
 #else
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true))
 #endif
-				DeserializeFromIni (reader, sectionName);
+				DeserializeFromIni (obj, reader, sectionName);
 		}
 
 		/// <summary>
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="json">JSON 문자열</param>
-		public void DeserializeFromIni (string json, string sectionName)
+		public static void DeserializeFromIni (BlockarObject obj, string json, string sectionName)
 		{
 			using (TextReader reader = new StringReader (json))
-				DeserializeFromIni (reader, sectionName);
+				DeserializeFromIni (obj, reader, sectionName);
 		}
 
 		/// <summary>
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="reader">JSON 데이터를 읽어올 수 있는 TextReader 객체</param>
-		public void DeserializeFromIni (TextReader reader, string sectionName)
+		public static void DeserializeFromIni (BlockarObject obj, TextReader reader, string sectionName)
 		{
-			Clear ();
+			obj.Clear ();
 
 			bool skipSection = true;
 			while (true)
@@ -168,7 +170,7 @@ namespace Daramee.Blockar
 				if (line [i] == ';') continue;
 				else if (line [i] == '[')
 				{
-					if (sectionName == __IniGetSectionTitle (line, i + 1))
+					if (sectionName == __IniGetSectionTitle (line, i + 1) || sectionName == null)
 						skipSection = false;
 					else
 						skipSection = true;
@@ -178,7 +180,7 @@ namespace Daramee.Blockar
 					string key = __IniGetKey (line, ref i);
 					string value = __IniGetValue (line, i);
 					if (!skipSection)
-						Set (key, value);
+						obj.Set (key, value);
 				}
 			}
 		}

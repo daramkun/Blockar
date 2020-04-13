@@ -18,7 +18,7 @@ namespace Daramee.Blockar
 		/// JSON 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
-		public void SerializeToJson (Stream stream)
+		public static void SerializeToJson (BlockarObject obj, Stream stream)
 		{
 #if NET20
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
@@ -26,7 +26,7 @@ namespace Daramee.Blockar
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
 #endif
 			{
-				SerializeToJson (writer);
+				SerializeToJson (obj, writer);
 			}
 		}
 
@@ -38,7 +38,7 @@ namespace Daramee.Blockar
 		{
 			StringBuilder builder = new StringBuilder ();
 			using (TextWriter writer = new StringWriter (builder))
-				SerializeToJson (writer);
+				SerializeToJson (this, writer);
 			return builder.ToString ();
 		}
 
@@ -46,15 +46,15 @@ namespace Daramee.Blockar
 		/// JSON 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="writer">직렬화한 데이터를 보관할 TextWriter 객체</param>
-		public void SerializeToJson (TextWriter writer)
+		public static void SerializeToJson (BlockarObject obj, TextWriter writer)
 		{
 			writer.Write ('{');
-			foreach (var obj in objs)
+			foreach (var innerObj in obj.objs)
 			{
-				writer.Write ($"\"{obj.Key}\":");
-				__JsonObjectToWriter (writer, obj.Value);
+				writer.Write ($"\"{innerObj.Key}\":");
+				__JsonObjectToWriter (writer, innerObj.Value);
 
-				if (obj != objs [objs.Count - 1])
+				if (innerObj != obj.objs [obj.objs.Count - 1])
 					writer.Write (',');
 			}
 			writer.Write ('}');
@@ -113,7 +113,7 @@ namespace Daramee.Blockar
 			// BlockarObject compatible Dictionary
 			else if (obj is IDictionary<string, object>)
 			{
-				FromDictionary (obj as IDictionary<string, object>).SerializeToJson (writer);
+				SerializeToJson (FromDictionary (obj as IDictionary<string, object>), writer);
 			}
 			// BlockarObject not compatible Dictionary
 			else if (type.GetInterface ("IDictionary") != null)
@@ -147,12 +147,12 @@ namespace Daramee.Blockar
 			}
 			else if (obj is BlockarObject)
 			{
-				(obj as BlockarObject).SerializeToJson (writer);
+				SerializeToJson ((obj as BlockarObject), writer);
 			}
 			// Any Object
 			else
 			{
-				FromObject (type, obj).SerializeToJson (writer);
+				SerializeToJson (FromObject (type, obj), writer);
 			}
 		}
 #endregion
@@ -162,36 +162,36 @@ namespace Daramee.Blockar
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="stream">JSON 데이터가 보관된 Stream 객체</param>
-		public void DeserializeFromJson (Stream stream)
+		public static void DeserializeFromJson (BlockarObject obj, Stream stream)
 		{
 #if NET20
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true))
 #else
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true))
 #endif
-				DeserializeFromJson (reader);
+				DeserializeFromJson (obj, reader);
 		}
 
 		/// <summary>
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="json">JSON 문자열</param>
-		public void DeserializeFromJson (string json)
+		public static void DeserializeFromJson (BlockarObject obj, string json)
 		{
 			using (TextReader reader = new StringReader (json))
-				DeserializeFromJson (reader);
+				DeserializeFromJson (obj, reader);
 		}
 
 		/// <summary>
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="reader">JSON 데이터를 읽어올 수 있는 TextReader 객체</param>
-		public void DeserializeFromJson (TextReader reader)
+		public static void DeserializeFromJson (BlockarObject obj, TextReader reader)
 		{
-			Clear ();
+			obj.Clear ();
 			char rc = __JsonPassWhitespaces (reader);
 			if (rc == '{')
-				__JsonInnerDeserializeObjectFromJson (this, reader);
+				__JsonInnerDeserializeObjectFromJson (obj, reader);
 			else
 				throw new Exception ("Invalid JSON Object.");
 		}
