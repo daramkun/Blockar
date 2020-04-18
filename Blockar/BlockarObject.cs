@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Daramee.Blockar
 {
@@ -13,6 +14,7 @@ namespace Daramee.Blockar
 
 		public ObjectKeyValue (string key) { Key = key; Value = default; }
 		public ObjectKeyValue (string key, object value = null) { Key = key; Value = value; }
+		public ObjectKeyValue (ObjectKeyValue kv) { Key = kv.Key; Value = kv.Value; }
 		public override string ToString () => $"{{Key: {Key}, Value: {Value}}}";
 	}
 
@@ -28,6 +30,17 @@ namespace Daramee.Blockar
 		public string SectionName { get; set; }
 
 		readonly List<ObjectKeyValue> objs = new List<ObjectKeyValue> ();
+
+		public BlockarObject ()
+		{
+
+		}
+
+		public BlockarObject (IDictionary<string, object> dict)
+		{
+			foreach (var kv in dict)
+				Set (kv.Key, kv.Value);
+		}
 
 		public bool ContainsKey (string key)
 		{
@@ -50,8 +63,41 @@ namespace Daramee.Blockar
 		}
 		public T Get<T> (string key)
 		{
-			var getted = Get (key);
-			return (T) getted;
+			foreach (var obj in objs)
+			{
+				if (obj.Key.Equals (key))
+				{
+					var value = obj.Value;
+					if (value is T)
+						return (T) value;
+
+					if (typeof (T) == typeof (byte)) return (T) (object) Convert.ToByte (value);
+					else if (typeof (T) == typeof (sbyte)) return (T) (object) Convert.ToSByte (value);
+					else if (typeof (T) == typeof (short)) return (T) (object) Convert.ToInt16 (value);
+					else if (typeof (T) == typeof (ushort)) return (T) (object) Convert.ToUInt16 (value);
+					else if (typeof (T) == typeof (int)) return (T) (object) Convert.ToInt32 (value);
+					else if (typeof (T) == typeof (uint)) return (T) (object) Convert.ToUInt32 (value);
+					else if (typeof (T) == typeof (long)) return (T) (object) Convert.ToInt64 (value);
+					else if (typeof (T) == typeof (ulong)) return (T) (object) Convert.ToUInt64 (value);
+					else if (typeof (T) == typeof (float)) return (T) (object) Convert.ToSingle (value);
+					else if (typeof (T) == typeof (double)) return (T) (object) Convert.ToDouble (value);
+					else if (typeof (T) == typeof (bool)) return (T) (object) Convert.ToBoolean (value);
+					else if (typeof (T) == typeof (decimal)) return (T) (object) Convert.ToDecimal (value);
+					else if (typeof (T) == typeof (string)) return (T) (object) Convert.ToString (value);
+					else if (typeof (T) == typeof (Regex)) return (T) (object) new Regex (Convert.ToString (value));
+					else if (typeof (T) == typeof (DateTime)) return (T) (object) Convert.ToDateTime (value);
+					else if (typeof (T) == typeof (TimeSpan))
+					{
+						return (T) (object) TimeSpan.Parse (Convert.ToString (value));
+					}
+					else if (typeof (T) == typeof (BlockarObject))
+					{
+						return (T) (object) BlockarObject.FromObject (value.GetType (), value);
+					}
+					else return (T) value;
+				}
+			}
+			throw new KeyNotFoundException ();
 		}
 
 		public void Set (string key, object value)
@@ -188,10 +234,7 @@ namespace Daramee.Blockar
 
 		public static BlockarObject FromDictionary (IDictionary<string, object> obj)
 		{
-			BlockarObject bo = new BlockarObject ();
-			foreach (var kv in obj)
-				bo.Set (kv.Key, kv.Value);
-			return bo;
+			return new BlockarObject (obj);
 		}
 
 		public IEnumerator<ObjectKeyValue> GetEnumerator () => objs.GetEnumerator ();
@@ -200,5 +243,12 @@ namespace Daramee.Blockar
 		IEnumerator<string> IEnumerable<string>.GetEnumerator () { foreach (var obj in objs) yield return obj.Key; }
 
 		IEnumerator<object> IEnumerable<object>.GetEnumerator () { foreach (var obj in objs) yield return obj.Value; }
+
+		public void CopyFrom (BlockarObject obj)
+		{
+			Clear ();
+			foreach (var kv in obj.objs)
+				objs.Add (new ObjectKeyValue (kv));
+		}
 	}
 }

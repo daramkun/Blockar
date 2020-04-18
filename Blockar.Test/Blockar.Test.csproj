@@ -6,6 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Samples\DaramRenamerStringTable.json" />
+    <None Remove="Samples\KoreaLotto.csv" />
+    <None Remove="Samples\R6SGameSettings.ini" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Samples\DaramRenamerStringTable.json" />
+    <EmbeddedResource Include="Samples\KoreaLotto.csv" />
+    <EmbeddedResource Include="Samples\R6SGameSettings.ini" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Blockar\Blockar.csproj" />
   </ItemGroup>
 

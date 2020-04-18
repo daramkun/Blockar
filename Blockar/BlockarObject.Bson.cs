@@ -27,7 +27,7 @@ namespace Daramee.Blockar
 			Integer64 = 0x12,
 		}
 
-		BSONType __BsonGetValueType (object obj)
+		static BSONType __BsonGetValueType (object obj)
 		{
 			if (obj == null) return BSONType.Null;
 
@@ -55,7 +55,7 @@ namespace Daramee.Blockar
 				return BSONType.Document;
 		}
 
-		byte [] __BsonGetBinaryKey (object key)
+		static byte [] __BsonGetBinaryKey (object key)
 		{
 			if (key is int) return new byte [] { (byte) (int) (object) key };
 			else if (key is string)
@@ -77,7 +77,7 @@ namespace Daramee.Blockar
 		/// BSON 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
-		public void SerializeToBson (Stream stream)
+		public static void SerializeToBson (Stream stream, BlockarObject obj)
 		{
 #if NET20
 			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8))
@@ -85,7 +85,7 @@ namespace Daramee.Blockar
 			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8, true))
 #endif
 			{
-				SerializeToBson (writer);
+				SerializeToBson (writer, obj);
 			}
 		}
 
@@ -97,7 +97,7 @@ namespace Daramee.Blockar
 		{
 			using (Stream stream = new MemoryStream ())
 			{
-				SerializeToBson (stream);
+				SerializeToBson (stream, this);
 				return (stream as MemoryStream).ToArray ();
 			}
 		}
@@ -106,17 +106,17 @@ namespace Daramee.Blockar
 		/// JSON 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="writer">직렬화한 데이터를 보관할 TextWriter 객체</param>
-		public void SerializeToBson (BinaryWriter writer)
+		public static void SerializeToBson (BinaryWriter writer, BlockarObject obj)
 		{
 			writer.Write (0);
-			foreach (var obj in objs)
+			foreach (var innerObj in obj.objs)
 			{
-				__BsonObjectToWriter (writer, obj.Key, obj.Value);
+				__BsonObjectToWriter (writer, innerObj.Key, innerObj.Value);
 			}
 			writer.Flush ();
 		}
 
-		void __BsonObjectToWriter (BinaryWriter writer, object key, object obj)
+		static void __BsonObjectToWriter (BinaryWriter writer, object key, object obj)
 		{
 			BSONType type;
 			writer.Write ((byte) (type = __BsonGetValueType (obj)));
@@ -179,34 +179,35 @@ namespace Daramee.Blockar
 		/// BSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="stream">BSON 데이터가 보관된 Stream 객체</param>
-		public void DeserializeFromBson (Stream stream)
+		public static BlockarObject DeserializeFromBson (Stream stream)
 		{
 #if NET20
 			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8))
 #else
 			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8, true))
 #endif
-				DeserializeFromBson (reader);
+				return DeserializeFromBson (reader);
 		}
 
 		/// <summary>
 		/// BSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="json">BSON 바이트 배열</param>
-		public void DeserializeFromBson (byte [] bsonArray)
+		public static BlockarObject DeserializeFromBson (byte [] bsonArray)
 		{
 			using (Stream stream = new MemoryStream (bsonArray))
-				DeserializeFromJson (stream);
+				return DeserializeFromJson (stream);
 		}
 
 		/// <summary>
 		/// BSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="reader">BSON 데이터를 읽어올 수 있는 BinaryReader 객체</param>
-		public void DeserializeFromBson (BinaryReader reader)
+		public static BlockarObject DeserializeFromBson (BinaryReader reader)
 		{
-			Clear ();
-			__BsonParseBsonObject (this, reader);
+			BlockarObject obj = new BlockarObject ();
+			__BsonParseBsonObject (obj, reader);
+			return obj;
 		}
 
 		static void __BsonParseBsonObject (BlockarObject blockarObject, BinaryReader reader)
