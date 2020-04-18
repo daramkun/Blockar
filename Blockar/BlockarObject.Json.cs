@@ -105,7 +105,7 @@ namespace Daramee.Blockar
 					else
 					{
 						builder.Append ("\\u");
-						builder.Append ($"{ch:X}".PadLeft (4, '0'));
+						builder.Append ($"{((int) ch):X}".PadLeft (4, '0'));
 					}
 				}
 				writer.Write (builder.Append ("\"").ToString ());
