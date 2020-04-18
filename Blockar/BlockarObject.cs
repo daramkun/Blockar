@@ -250,5 +250,7 @@ namespace Daramee.Blockar
 			foreach (var kv in obj.objs)
 				objs.Add (new ObjectKeyValue (kv));
 		}
+
+		public override string ToString () => ToJsonString ();
 	}
 }
