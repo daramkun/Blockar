@@ -1,0 +1,16 @@
+﻿{
+	"name" : "Jin Jae-yeon",
+	"birthday" : 19910716,
+	"phone" : "+82-10-2969-xxxx",
+	"grade" : 2.5,
+	"homepage" : "http://www.daram.pe.kr",
+	"cert" : [
+		"Word Processor Level 3", "ITQ PowerPoint", "Craftsman Information Processing ", "Industrial Engineer Information Processing "
+	],
+	"school" : {
+		"university" : "Chungnam National University",
+		"highschool" : "Korea Game Science Highschool"
+	},
+
+	"result" : {"status":"succeed","message":"login succeed.","result":{"nickname":"\ub2e4\ub78c\uad70","no":"6"}}
+}

@@ -4,8 +4,8 @@ Blockar
 Simple Data parser &amp; generator for .NET
 
 ## Planning Support Data Format
-* JSON
-* BSON
-* INI
-* CSV
-* YAML
+* [x] JSON
+* [x] BSON
+* [x] INI
+* [x] CSV
+* [ ] YAML
