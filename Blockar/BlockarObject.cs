@@ -25,8 +25,90 @@ namespace Daramee.Blockar
 		public ObjectKeyValue (string key, T value) : base (key) { Value = value; }
 	}
 
+	public delegate bool ValueTypeCheck (Type type);
+	public delegate object ValueConverter (object value, Type type);
+
 	public sealed partial class BlockarObject : IEnumerable<ObjectKeyValue>, IEnumerable<string>, IEnumerable<object>
 	{
+		public static IDictionary<ValueTypeCheck, ValueConverter> ValueConverters { get; private set; } = new Dictionary<ValueTypeCheck, ValueConverter> ()
+		{
+			{ (type) => type == typeof (byte), (value, type) => Convert.ToByte (value) },
+			{ (type) => type == typeof (sbyte), (value, type) => Convert.ToSByte (value) },
+			{ (type) => type == typeof (short), (value, type) => Convert.ToInt16 (value) },
+			{ (type) => type == typeof (ushort), (value, type) => Convert.ToUInt16 (value) },
+			{ (type) => type == typeof (int), (value, type) => Convert.ToInt32 (value) },
+			{ (type) => type == typeof (uint), (value, type) => Convert.ToUInt32 (value) },
+			{ (type) => type == typeof (long), (value, type) => Convert.ToInt64 (value) },
+			{ (type) => type == typeof (ulong), (value, type) => Convert.ToUInt64 (value) },
+			{ (type) => type == typeof (float), (value, type) => Convert.ToSingle (value) },
+			{ (type) => type == typeof (double), (value, type) => Convert.ToDouble (value) },
+			{ (type) => type == typeof (decimal), (value, type) => Convert.ToDecimal (value) },
+			{ (type) => type == typeof (bool), (value, type) => Convert.ToBoolean (value) },
+			{ (type) => type == typeof (char), (value, type) => Convert.ToChar (value) },
+			{ (type) => type == typeof (string), (value, type) => {
+				if (value is string) return value;
+				else return value.ToString ();
+			} },
+			{ (type) => type == typeof (Regex), (value, type) => new Regex (value.ToString ()) },
+			{ (type) => type == typeof (DateTime), (value, type) => Convert.ToDateTime (value) },
+			{ (type) => type == typeof (TimeSpan), (value, type) => {
+				if (value is byte || value is sbyte || value is short || value is ushort || value is int || value is uint || value is long || value is ulong)
+					return TimeSpan.FromTicks ((long) value);
+				else if (value is float || value is double || value is decimal)
+					return TimeSpan.FromSeconds ((double) value);
+				else if(TimeSpan.TryParse(value?.ToString (), out TimeSpan result))
+					return result;
+				else
+					return null;
+			} },
+			{ (type) => type == typeof (BlockarObject), (value, type) => BlockarObject.FromObject(value.GetType(), value) },
+			{ (type) => type.IsArray, (value, type) => {
+				if(value is IEnumerable)
+				{
+					List<object> temp = new List<object> ();
+					var elementType = type.GetElementType ();
+					foreach(object i in value as IEnumerable)
+						temp.Add(ValueConversion(i, elementType));
+					Array arr = Array.CreateInstance(elementType, temp.Count);
+					Array.Copy(temp.ToArray (), arr, temp.Count);
+					return arr;
+				}
+				else if (value.GetType ().IsArray)
+				{
+					Type elementType = type.GetElementType();
+					Array valueArr = value as Array;
+					Array arr = Array.CreateInstance(elementType, valueArr.Length);
+					for (int i = 0; i < arr.Length; ++i)
+						arr.SetValue(ValueConversion(valueArr.GetValue(i), elementType), i);
+				}
+				return null;
+			} },
+			{ (type) => type.IsSubclassOf (typeof (Enum)) || type == typeof (Enum), (value, type) => {
+				try
+				{
+					return Enum.Parse (type, value.ToString (), false);
+				}
+				catch { return null; }
+			} },
+		};
+		public static object ValueConversion (object value, Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException ();
+			if (value == null || value.GetType () == type)
+				return value;
+			else
+			{
+				foreach (var kv in ValueConverters)
+				{
+					if (kv.Key (type))
+						return kv.Value (value, type);
+				}
+
+				return FromObject (value.GetType (), value).ToObject (type);
+			}
+		}
+
 		public string SectionName { get; set; }
 
 		readonly List<ObjectKeyValue> objs = new List<ObjectKeyValue> ();
@@ -63,38 +145,17 @@ namespace Daramee.Blockar
 		}
 		public T Get<T> (string key)
 		{
+			return (T) Get (key, typeof (T));
+		}
+		public object Get (string key, Type type)
+		{
 			foreach (var obj in objs)
 			{
 				if (obj.Key.Equals (key))
 				{
 					var value = obj.Value;
-					if (value is T)
-						return (T) value;
-
-					if (typeof (T) == typeof (byte)) return (T) (object) Convert.ToByte (value);
-					else if (typeof (T) == typeof (sbyte)) return (T) (object) Convert.ToSByte (value);
-					else if (typeof (T) == typeof (short)) return (T) (object) Convert.ToInt16 (value);
-					else if (typeof (T) == typeof (ushort)) return (T) (object) Convert.ToUInt16 (value);
-					else if (typeof (T) == typeof (int)) return (T) (object) Convert.ToInt32 (value);
-					else if (typeof (T) == typeof (uint)) return (T) (object) Convert.ToUInt32 (value);
-					else if (typeof (T) == typeof (long)) return (T) (object) Convert.ToInt64 (value);
-					else if (typeof (T) == typeof (ulong)) return (T) (object) Convert.ToUInt64 (value);
-					else if (typeof (T) == typeof (float)) return (T) (object) Convert.ToSingle (value);
-					else if (typeof (T) == typeof (double)) return (T) (object) Convert.ToDouble (value);
-					else if (typeof (T) == typeof (bool)) return (T) (object) Convert.ToBoolean (value);
-					else if (typeof (T) == typeof (decimal)) return (T) (object) Convert.ToDecimal (value);
-					else if (typeof (T) == typeof (string)) return (T) (object) Convert.ToString (value);
-					else if (typeof (T) == typeof (Regex)) return (T) (object) new Regex (Convert.ToString (value));
-					else if (typeof (T) == typeof (DateTime)) return (T) (object) Convert.ToDateTime (value);
-					else if (typeof (T) == typeof (TimeSpan))
-					{
-						return (T) (object) TimeSpan.Parse (Convert.ToString (value));
-					}
-					else if (typeof (T) == typeof (BlockarObject))
-					{
-						return (T) (object) BlockarObject.FromObject (value.GetType (), value);
-					}
-					else return (T) value;
+					var valueType = value.GetType ();
+					return ValueConversion (value, valueType);
 				}
 			}
 			throw new KeyNotFoundException ();
@@ -163,15 +224,18 @@ namespace Daramee.Blockar
 				string name = fieldOption?.Name ?? member.Name;
 #if !NET20
 				if (member.MemberType == MemberTypes.Property)
-					(member as PropertyInfo).SetValue (o, Get (name));
+				{
+					PropertyInfo propInfo = member as PropertyInfo;
+					propInfo.SetValue (o, Get (name, propInfo.PropertyType));
+				}
 				else
 #endif
 				{
 					FieldInfo fieldInfo = member as FieldInfo;
 					if (type.IsValueType)
-						fieldInfo.SetValueDirect (__makeref(o), Get (name));
+						fieldInfo.SetValueDirect (__makeref(o), Get (name, fieldInfo.FieldType));
 					else
-						fieldInfo.SetValue (o, Get (name));
+						fieldInfo.SetValue (o, Get (name, fieldInfo.FieldType));
 				}
 			}
 
