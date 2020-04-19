@@ -183,41 +183,38 @@ namespace Daramee.Blockar
 
 		public static IEnumerable<BlockarObject> DeserializeFromIni (TextReader reader)
 		{
-			//while (true)
-			//{
-				BlockarObject obj = new BlockarObject ();
+			BlockarObject obj = new BlockarObject ();
 
-				while (true)
+			while (true)
+			{
+				int i = 0;
+				string line = reader.ReadLine ();
+				if (line == null)
+					break;
+				if (line.Length == 0)
+					continue;
+				for (; i < line.Length; ++i)
 				{
-					int i = 0;
-					string line = reader.ReadLine ();
-					if (line == null)
+					char ch = line [i];
+					if (ch != ' ' && ch != '\t' && ch != '\a' && ch != '\r')
 						break;
-					if (line.Length == 0)
-						continue;
-					for (; i < line.Length; ++i)
-					{
-						char ch = line [i];
-						if (ch != ' ' && ch != '\t' && ch != '\a' && ch != '\r')
-							break;
-					}
-					if (line [i] == ';') continue;
-					else if (line [i] == '[')
-					{
-						if (obj.Count > 0)
-							yield return obj;
-						obj = new BlockarObject ();
-						obj.SectionName = __IniGetSectionTitle (line, i + 1);
-					}
-					else
-					{
-						string key = __IniGetKey (line, ref i);
-						string value = __IniGetValue (line, i);
-						obj.Set (key, value);
-					}
 				}
-				yield return obj;
-			//}
+				if (line [i] == ';') continue;
+				else if (line [i] == '[')
+				{
+					if (obj.Count > 0)
+						yield return obj;
+					obj = new BlockarObject ();
+					obj.SectionName = __IniGetSectionTitle (line, i + 1);
+				}
+				else
+				{
+					string key = __IniGetKey (line, ref i);
+					string value = __IniGetValue (line, i);
+					obj.Set (key, value);
+				}
+			}
+			yield return obj;
 		}
 
 		static string __IniGetSectionTitle (string line, int startIndex)
