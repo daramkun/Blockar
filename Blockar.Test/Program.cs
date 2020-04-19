@@ -33,6 +33,11 @@ namespace Blockar.Test
 			blockarObject = BlockarObject.DeserializeFromJson (jsonString);
 			Console.WriteLine (blockarObject.ToJsonString ());
 
+			using (Stream daramRenamerStringTableStream = Assembly.GetExecutingAssembly ().GetManifestResourceStream ("Blockar.Test.Samples.DaramRenamerStringTable.json"))
+			{
+				BlockarObject daramRenamerStringTable = BlockarObject.DeserializeFromJson (daramRenamerStringTableStream);
+			}
+
 			using (Stream r6sSettingsStream = Assembly.GetExecutingAssembly ().GetManifestResourceStream ("Blockar.Test.Samples.R6SGameSettings.ini"))
 			{
 				List<BlockarObject> r6sSettings = new List<BlockarObject> (BlockarObject.DeserializeFromIni (r6sSettingsStream));
