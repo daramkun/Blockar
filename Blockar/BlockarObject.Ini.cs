@@ -16,7 +16,7 @@ namespace Daramee.Blockar
 		/// <param name="objs">직렬화할 객체</param>
 		public static void SerializeToIni (Stream stream, params BlockarObject [] objs)
 		{
-#if NET20
+#if NET20 || NET35
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
 #else
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
@@ -133,7 +133,7 @@ namespace Daramee.Blockar
 		/// <param name="stream">JSON 데이터가 보관된 Stream 객체</param>
 		public static BlockarObject DeserializeFromIni (Stream stream, string sectionName)
 		{
-#if NET20
+#if NET20 || NET35
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true);
 #else
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true);
@@ -143,7 +143,7 @@ namespace Daramee.Blockar
 
 		public static IEnumerable<BlockarObject> DeserializeFromIni (Stream stream)
 		{
-#if NET20
+#if NET20 || NET35
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true);
 #else
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true);

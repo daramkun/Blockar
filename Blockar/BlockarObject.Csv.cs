@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-#if !NET20
+#if !NET20 && !NET35
 using System.Linq;
 #endif
 using System.Text;
@@ -15,7 +15,7 @@ namespace Daramee.Blockar
 #region Serialization
 		public static void SerializeToCsv (Stream stream, char separator = ',', params BlockarObject [] objs)
 		{
-#if NET20
+#if NET20 || NET35
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
 #else
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
@@ -28,14 +28,14 @@ namespace Daramee.Blockar
 		public static string SafeText (string text, char separator, bool isForColumnName = false)
 		{
 			if (isForColumnName
-#if NET20
+#if NET20 || NET35
 				&& (text.IndexOf (separator) >= 0 || text.IndexOf (',') >= 0 || text.IndexOf ('|') >= 0 || text.IndexOf ('\t') >= 0 || text.IndexOf ('"') >= 0 || text.IndexOf ('\n') >= 0))
 #else
 				&& (text.Contains (separator) || text.Contains (',') || text.Contains ('|') || text.Contains ('\t') || text.Contains ('"') || text.Contains ('\n')))
 #endif
 				throw new ArgumentException ($"Column Name cannot contains ',', '|', '\\t', '\"', '\\n' and ${separator}.");
 
-#if NET20
+#if NET20 || NET35
 			if (text.IndexOf (separator) >= 0 || text.IndexOf ('"') >= 0 || text.IndexOf ('\n') >= 0)
 #else
 			if (text.Contains (separator) || text.Contains ('"') || text.Contains ('\n'))
@@ -85,7 +85,7 @@ namespace Daramee.Blockar
 #region Deserialization
 		public static IEnumerable<BlockarObject> DeserializeFromCsv (Stream stream, char separator = CsvSeparatorDetectorCharacter)
 		{
-#if NET20
+#if NET20 || NET35
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true);
 #else
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true);
@@ -104,7 +104,7 @@ namespace Daramee.Blockar
 			string columnNameRow = reader.ReadLine ();
 			if (separator == CsvSeparatorDetectorCharacter)
 			{
-#if NET20
+#if NET20 || NET35
 				if (columnNameRow.IndexOf (',') >= 0) separator = ',';
 				else if (columnNameRow.IndexOf ('\t') >= 0) separator = '\t';
 				else if (columnNameRow.IndexOf ('|') >= 0) separator = '|';
@@ -209,7 +209,7 @@ namespace Daramee.Blockar
 					case CsvDeserializeState.EndColumn:
 						{
 							obj.Set (columnNames [columnNumber], builder.ToString ());
-#if NET20
+#if NET20 || NET35
 							builder = new StringBuilder ();
 #else
 							builder.Clear ();

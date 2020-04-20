@@ -20,7 +20,7 @@ namespace Daramee.Blockar
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
 		public static void SerializeToJson (Stream stream, BlockarObject obj)
 		{
-#if NET20
+#if NET20 || NET35
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
 #else
 			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
@@ -164,7 +164,7 @@ namespace Daramee.Blockar
 		/// <param name="stream">JSON 데이터가 보관된 Stream 객체</param>
 		public static BlockarObject DeserializeFromJson (Stream stream)
 		{
-#if NET20
+#if NET20 || NET35
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true))
 #else
 			using (TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true))

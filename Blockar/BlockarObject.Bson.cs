@@ -79,7 +79,7 @@ namespace Daramee.Blockar
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
 		public static void SerializeToBson (Stream stream, BlockarObject obj)
 		{
-#if NET20
+#if NET20 || NET35
 			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8))
 #else
 			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8, true))
@@ -181,7 +181,7 @@ namespace Daramee.Blockar
 		/// <param name="stream">BSON 데이터가 보관된 Stream 객체</param>
 		public static BlockarObject DeserializeFromBson (Stream stream)
 		{
-#if NET20
+#if NET20 || NET35
 			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8))
 #else
 			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8, true))
