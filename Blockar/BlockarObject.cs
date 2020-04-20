@@ -15,7 +15,7 @@ namespace Daramee.Blockar
 		public ObjectKeyValue (string key) { Key = key; Value = default; }
 		public ObjectKeyValue (string key, object value = null) { Key = key; Value = value; }
 		public ObjectKeyValue (ObjectKeyValue kv) { Key = kv.Key; Value = kv.Value; }
-		public override string ToString () => $"{{Key: {Key}, Value: {Value}}}";
+		public override string ToString () => $"{{{Key}:{Value}}}";
 	}
 
 	public class ObjectKeyValue<T> : ObjectKeyValue
@@ -40,6 +40,14 @@ namespace Daramee.Blockar
 			{ (type) => type == typeof (uint), (value, type) => Convert.ToUInt32 (value) },
 			{ (type) => type == typeof (long), (value, type) => Convert.ToInt64 (value) },
 			{ (type) => type == typeof (ulong), (value, type) => Convert.ToUInt64 (value) },
+			{ (type) => type == typeof (IntPtr), (value, type) =>
+				new IntPtr (
+#if !NET20
+					Environment.Is64BitProcess ? Convert.ToInt64 (value) :
+#endif
+					Convert.ToInt32 (value)
+				)
+			},
 			{ (type) => type == typeof (float), (value, type) => Convert.ToSingle (value) },
 			{ (type) => type == typeof (double), (value, type) => Convert.ToDouble (value) },
 			{ (type) => type == typeof (decimal), (value, type) => Convert.ToDecimal (value) },
@@ -61,8 +69,56 @@ namespace Daramee.Blockar
 				else
 					return null;
 			} },
-			{ (type) => type == typeof (BlockarObject), (value, type) => BlockarObject.FromObject(value.GetType(), value) },
+			{ (type) => type == typeof (BlockarObject), (value, type) => {
+				return BlockarObject.FromObject(value.GetType(), value);
+			} },
+			{ (type) => type.GetInterface ("IDictionary") != null, (value, type) => {
+				IDictionary newDict = Activator.CreateInstance (type) as IDictionary;
+				var valueType = value.GetType ();
+
+				IDictionary valueDict = value as IDictionary;
+				if (valueDict == null)
+					valueDict = BlockarObject.FromObject(value.GetType (), value).ToDictionary ();
+
+				var genericTypes = type.GetGenericArguments ();
+				Type dictKeyType = genericTypes?.GetValue (0) as Type ?? typeof(object);
+				Type dictValueType = genericTypes?.GetValue (1) as Type ?? typeof(object);
+				foreach(var key in valueDict.Keys)
+				{
+					var newKey = dictKeyType != typeof(object) ? ValueConversion(key, dictKeyType) : key;
+					var dictCurrentValue = valueDict[key];
+					var newValue = dictValueType != typeof(object) ? ValueConversion(dictCurrentValue, dictValueType) : dictCurrentValue;
+					newDict.Add(newKey, newValue);
+				}
+
+				return newDict;
+			} },
+			{ (type) => type.GetInterface("IList") != null, (value, type) => {
+				IList newList = Activator.CreateInstance (type) as IList;
+				var valueType = value.GetType ();
+
+				IEnumerator valueEnum = value as IEnumerator;
+				if(value is string)
+					valueEnum = Encoding.UTF8.GetBytes (value as string).GetEnumerator ();
+				if(valueEnum == null)
+				{
+					if (value is IEnumerable)
+						valueEnum = (value as IEnumerable).GetEnumerator ();
+					else
+						valueEnum = new object [] { value }.GetEnumerator ();
+				}
+
+				var genericTypes = type.GetGenericArguments ();
+				Type genericType = genericTypes?.GetValue(0) as Type ?? typeof(object);
+
+				while (valueEnum.MoveNext ())
+					newList.Add (ValueConversion (valueEnum.Current, genericType));
+
+				return newList;
+			} },
 			{ (type) => type.IsArray, (value, type) => {
+				if(value is string)
+					value = Encoding.UTF8.GetBytes (value as string);
 				if(value is IEnumerable)
 				{
 					List<object> temp = new List<object> ();
@@ -315,6 +371,16 @@ namespace Daramee.Blockar
 				objs.Add (new ObjectKeyValue (kv));
 		}
 
-		public override string ToString () => ToJsonString ();
+		public override string ToString ()
+		{
+			StringBuilder builder = new StringBuilder ();
+			builder.Append ('{');
+			foreach (var kv in objs)
+				builder.Append (kv.Key).Append (':').Append (kv.Value).Append (',');
+			if (builder.Length > 1)
+				builder.Remove (builder.Length - 1, 1);
+			builder.Append ('}');
+			return builder.ToString ();
+		}
 	}
 }

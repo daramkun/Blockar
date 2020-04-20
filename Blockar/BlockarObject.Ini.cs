@@ -64,7 +64,7 @@ namespace Daramee.Blockar
 			// Integers
 			if (type == typeof (byte) || type == typeof (sbyte) || type == typeof (short)
 				|| type == typeof (ushort) || type == typeof (int) || type == typeof (uint)
-					|| type == typeof (long) || type == typeof (ulong))
+					|| type == typeof (long) || type == typeof (ulong) || type == typeof (IntPtr))
 				writer.Write (obj.ToString ());
 			// Floating Points
 			else if (type == typeof (float) || type == typeof (double) || type == typeof (decimal))
