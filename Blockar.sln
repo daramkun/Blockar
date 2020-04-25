@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29920.165
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blockar", "Blockar\Blockar.csproj", "{F3271F50-9199-41E0-ADD5-0D852DF1F15F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blockar.Test", "Blockar.Test\Blockar.Test.csproj", "{3F801481-F6C4-4F13-A7EA-3322F9AA4632}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blockar.Test", "Blockar.Test\Blockar.Test.csproj", "{3F801481-F6C4-4F13-A7EA-3322F9AA4632}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

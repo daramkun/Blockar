@@ -1,6 +1,7 @@
 ﻿using Daramee.Blockar;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
@@ -17,7 +18,7 @@ namespace Blockar.Test
 			public int Age;
 		}
 
-		static void Main (string [] args)
+		static void BaseTest ()
 		{
 			BlockarObject blockarObject = new BlockarObject ();
 			blockarObject.Set<string> ("name", "John Doe");
@@ -47,7 +48,38 @@ namespace Blockar.Test
 			{
 				List<BlockarObject> lottoNumbers = new List<BlockarObject> (BlockarObject.DeserializeFromCsv (lottoStream));
 			}
+		}
 
+		static void JsonPerformanceTest ()
+		{
+			const int LOOP_COUNT = 100;
+			string jsonString = new StreamReader (Assembly.GetExecutingAssembly ().GetManifestResourceStream ("Blockar.Test.Samples.DaramRenamerStringTable.json")).ReadToEnd ();
+			Stopwatch stopwatch = new Stopwatch ();
+
+			Console.WriteLine ("== Blockar JSON Deserializer Performance Test ==");
+			
+			stopwatch.Start ();
+			for (int i = 0; i < LOOP_COUNT; ++i)
+				BlockarObject.DeserializeFromJson (jsonString);
+			Console.WriteLine ("Blockar: {0}s per {1}", stopwatch.Elapsed.TotalSeconds, LOOP_COUNT);
+			stopwatch.Stop ();
+
+			stopwatch.Restart ();
+			var jsonDotNetSerializer = Newtonsoft.Json.JsonSerializer.CreateDefault ();
+			for (int i = 0; i < LOOP_COUNT; ++i)
+			{
+				using (TextReader reader = new StringReader (jsonString))
+					jsonDotNetSerializer.Deserialize (reader, null);
+			}
+			Console.WriteLine ("Newtonsoft.Json: {0}s per {1}", stopwatch.Elapsed.TotalSeconds, LOOP_COUNT);
+			stopwatch.Stop ();
+
+		}
+
+		static void Main (string [] args)
+		{
+			//BaseTest ();
+			JsonPerformanceTest ();
 		}
 	}
 }

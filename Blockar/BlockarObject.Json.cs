@@ -219,7 +219,7 @@ namespace Daramee.Blockar
 			return rc;
 		}
 
-		static string __JsonGetStringFromString (TextReader reader)
+		static void __JsonGetStringFromString (TextReader reader, StringBuilder builder)
 		{
 			char ToCharFromHexa (char [] p, int length)
 			{
@@ -233,9 +233,7 @@ namespace Daramee.Blockar
 #endif
 			}
 
-			StringBuilder sb = new StringBuilder ();
 			bool backslashMode = false;
-			char [] charBuffer = new char [4];
 			while (true)
 			{
 				char ch = (char) reader.Read ();
@@ -243,23 +241,29 @@ namespace Daramee.Blockar
 				{
 					switch (ch)
 					{
-						case 'n': sb [sb.Length - 1] = '\n'; break;
-						case 'r': sb [sb.Length - 1] = '\r'; break;
-						case 't': sb [sb.Length - 1] = '\t'; break;
-						case '\\': sb [sb.Length - 1] = '\\'; break;
-						case '"': sb [sb.Length - 1] = '"'; break;
-						case '/': sb [sb.Length - 1] = '/'; break;
-						case 'b': sb [sb.Length - 1] = '\b'; break;
-						case 'f': sb [sb.Length - 1] = '\f'; break;
+						case 'n': builder [builder.Length - 1] = '\n'; break;
+						case 'r': builder [builder.Length - 1] = '\r'; break;
+						case 't': builder [builder.Length - 1] = '\t'; break;
+						case '\\': builder [builder.Length - 1] = '\\'; break;
+						case '"': builder [builder.Length - 1] = '"'; break;
+						case '/': builder [builder.Length - 1] = '/'; break;
+						case 'b': builder [builder.Length - 1] = '\b'; break;
+						case 'f': builder [builder.Length - 1] = '\f'; break;
 						case 'u':
-							sb.Remove (sb.Length - 1, 1);
-							reader.Read (charBuffer, 0, 4);
-							sb.Append (ToCharFromHexa (charBuffer, 4));
+							{
+								builder.Remove (builder.Length - 1, 1);
+								char [] charBuffer = new char [4];
+								reader.Read (charBuffer, 0, 4);
+								builder.Append (ToCharFromHexa (charBuffer, 4));
+							}
 							break;
 						case 'x':
-							sb.Remove (sb.Length - 1, 1);
-							reader.Read (charBuffer, 0, 2);
-							sb.Append (ToCharFromHexa (charBuffer, 2));
+							{
+								builder.Remove (builder.Length - 1, 1);
+								char [] charBuffer = new char [4];
+								reader.Read (charBuffer, 0, 2);
+								builder.Append (ToCharFromHexa (charBuffer, 2));
+							}
 							break;
 
 						default: throw new Exception ();
@@ -270,12 +274,11 @@ namespace Daramee.Blockar
 					break;
 				else
 				{
-					sb.Append (ch);
+					builder.Append (ch);
 					if (ch == '\\')
 						backslashMode = true;
 				}
 			}
-			return sb.ToString ();
 		}
 
 		static object __JsonGetKeywordFromString (TextReader reader, char ch)
@@ -351,6 +354,7 @@ namespace Daramee.Blockar
 			{
 				JsonParseState parseState = JsonParseState.Key;
 				Queue<object> tokenStack = new Queue<object> ();
+				StringBuilder stringBuilder = new StringBuilder ();
 
 				while (true)
 				{
@@ -368,7 +372,15 @@ namespace Daramee.Blockar
 						parseState = JsonParseState.Key;
 					}
 					else if (rc == '"')
-						tokenStack.Enqueue (__JsonGetStringFromString (reader));
+					{
+#if !(NET20 || NET35)
+						stringBuilder.Clear ();
+#else
+						stringBuilder.Remove (0, stringBuilder.Length);
+#endif
+						__JsonGetStringFromString (reader, stringBuilder);
+						tokenStack.Enqueue (stringBuilder.ToString ());
+					}
 					else if (rc == 't' || rc == 'f' || rc == 'n')
 						tokenStack.Enqueue (__JsonGetKeywordFromString (reader, rc));
 					else if ((rc >= '0' && rc <= '9') || rc == '-' || rc == '+')
@@ -411,6 +423,7 @@ namespace Daramee.Blockar
 			try
 			{
 				JsonParseState parseState = JsonParseState.None;
+				StringBuilder stringBuilder = new StringBuilder ();
 
 				while (true)
 				{
@@ -423,7 +436,13 @@ namespace Daramee.Blockar
 					{
 						if (parseState != JsonParseState.None)
 							throw new Exception ("Invalid JSON Document.");
-						arr.Add (__JsonGetStringFromString (reader));
+#if !(NET20 || NET35)
+						stringBuilder.Clear ();
+#else
+						stringBuilder.Remove (0, stringBuilder.Length);
+#endif
+						__JsonGetStringFromString (reader, stringBuilder);
+						arr.Add (stringBuilder.ToString ());
 						parseState = JsonParseState.Value;
 					}
 					else if (rc == 't' || rc == 'f' || rc == 'n')
