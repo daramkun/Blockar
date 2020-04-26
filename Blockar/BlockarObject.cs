@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Daramee.Blockar
 {
-	public class ObjectKeyValue
+	public struct ObjectKeyValue
 	{
 		public readonly string Key;
 		public object Value;
@@ -16,13 +16,29 @@ namespace Daramee.Blockar
 		public ObjectKeyValue (string key, object value = null) { Key = key; Value = value; }
 		public ObjectKeyValue (ObjectKeyValue kv) { Key = kv.Key; Value = kv.Value; }
 		public override string ToString () => $"{{{Key}:{Value}}}";
-	}
 
-	public class ObjectKeyValue<T> : ObjectKeyValue
-	{
-		public new T Value;
+		public override bool Equals (object obj)
+		{
+			if(obj is ObjectKeyValue)
+			{
+				return Key == ((ObjectKeyValue) obj).Key;
+			}
+			return base.Equals (obj);
+		}
 
-		public ObjectKeyValue (string key, T value) : base (key) { Value = value; }
+		public override int GetHashCode ()
+		{
+			return Key.GetHashCode ();
+		}
+
+		public static bool operator == (ObjectKeyValue kv1, ObjectKeyValue kv2)
+		{
+			return kv1.Key == kv2.Key;
+		}
+		public static bool operator != (ObjectKeyValue kv1, ObjectKeyValue kv2)
+		{
+			return kv1.Key != kv2.Key;
+		}
 	}
 
 	public sealed partial class BlockarObject : IEnumerable<ObjectKeyValue>, IEnumerable<string>, IEnumerable<object>
@@ -81,11 +97,19 @@ namespace Daramee.Blockar
 
 		public void Set (string key, object value)
 		{
-			foreach (var obj in objs)
+			/*foreach (var obj in objs)
 			{
 				if (obj.Key.Equals (key))
 				{
 					obj.Value = value;
+					return;
+				}
+			}*/
+			for(int i = 0; i < objs.Count; ++i)
+			{
+				if(objs[i].Key.Equals(key))
+				{
+					objs [i] = new ObjectKeyValue (key, value);
 					return;
 				}
 			}
@@ -98,12 +122,21 @@ namespace Daramee.Blockar
 
 		public T Remove<T> (string key)
 		{
-			foreach (var obj in objs)
+			/*foreach (var obj in objs)
 			{
 				if (obj.Key.Equals (key))
 				{
 					objs.Remove (obj);
 					return (T) obj.Value;
+				}
+			}*/
+			for (int i = 0; i < objs.Count; ++i)
+			{
+				if (objs [i].Key.Equals (key))
+				{
+					var ret = objs [i].Value;
+					objs.RemoveAt (i);
+					return (T) ret;
 				}
 			}
 			throw new KeyNotFoundException ();

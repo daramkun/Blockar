@@ -191,7 +191,11 @@ namespace Daramee.Blockar
 			BlockarObject obj = new BlockarObject ();
 			char rc = __JsonPassWhitespaces (reader);
 			if (rc == '{')
-				__JsonInnerDeserializeObjectFromJson (obj, reader);
+			{
+				StringBuilder stringBuilder = new StringBuilder (4096);
+				char [] charBuffer = new char [6];
+				__JsonInnerDeserializeObjectFromJson (obj, reader, stringBuilder, charBuffer);
+			}
 			else
 				throw new Exception ("Invalid JSON Object.");
 			return obj;
@@ -219,18 +223,14 @@ namespace Daramee.Blockar
 			return rc;
 		}
 
-		static void __JsonGetStringFromString (TextReader reader, StringBuilder builder)
+		static void __JsonGetStringFromString (TextReader reader, StringBuilder builder, char [] charBuffer)
 		{
 			char ToCharFromHexa (char [] p, int length)
 			{
-#if NET20
-				StringBuilder builder = new StringBuilder ();
+				ushort hexInt = 0;
 				for (int i = 0; i < length; ++i)
-					builder.Append (p [i]);
-				return Convert.ToChar (ushort.Parse (builder.ToString (), NumberStyles.AllowHexSpecifier));
-#else
-				return Convert.ToChar (ushort.Parse (string.Concat (p.Take (length)), NumberStyles.AllowHexSpecifier));
-#endif
+					hexInt = (ushort) ((hexInt * 10) + (ushort) (p [i] - '0'));
+				return Convert.ToChar (hexInt);
 			}
 
 			bool backslashMode = false;
@@ -252,7 +252,6 @@ namespace Daramee.Blockar
 						case 'u':
 							{
 								builder.Remove (builder.Length - 1, 1);
-								char [] charBuffer = new char [4];
 								reader.Read (charBuffer, 0, 4);
 								builder.Append (ToCharFromHexa (charBuffer, 4));
 							}
@@ -260,7 +259,6 @@ namespace Daramee.Blockar
 						case 'x':
 							{
 								builder.Remove (builder.Length - 1, 1);
-								char [] charBuffer = new char [4];
 								reader.Read (charBuffer, 0, 2);
 								builder.Append (ToCharFromHexa (charBuffer, 2));
 							}
@@ -281,7 +279,7 @@ namespace Daramee.Blockar
 			}
 		}
 
-		static object __JsonGetKeywordFromString (TextReader reader, char ch)
+		static object __JsonGetKeywordFromString (TextReader reader, char ch, char[] charBuffer)
 		{
 			bool CheckArray (char [] v1, char [] v2, int length)
 			{
@@ -293,7 +291,6 @@ namespace Daramee.Blockar
 				return true;
 			}
 
-			char [] charBuffer = new char [5];
 			charBuffer [0] = ch;
 			switch (ch)
 			{
@@ -314,10 +311,9 @@ namespace Daramee.Blockar
 			}
 		}
 
-		static object __JsonGetNumberFromString (TextReader reader, char ch)
+		static object __JsonGetNumberFromString (TextReader reader, char ch, StringBuilder builder)
 		{
-			StringBuilder sb = new StringBuilder ();
-			sb.Append (ch);
+			builder.Append (ch);
 
 			bool isFloatingPoint = false;
 
@@ -328,7 +324,7 @@ namespace Daramee.Blockar
 					break;
 				reader.Read ();
 
-				sb.Append (ch);
+				builder.Append (ch);
 
 				if (ch == '.' && !isFloatingPoint) isFloatingPoint = true;
 				else if (ch == '.' && isFloatingPoint) throw new Exception ("Invalid JSON document.");
@@ -337,27 +333,32 @@ namespace Daramee.Blockar
 			if (!isFloatingPoint)
 			{
 				int temp;
-				if (int.TryParse (sb.ToString (), out temp)) return temp;
+				if (int.TryParse (builder.ToString (), out temp)) return temp;
 				else throw new Exception ("Invalid JSON document.");
 			}
 			else
 			{
 				double temp;
-				if (double.TryParse (sb.ToString (), out temp)) return temp;
+				if (double.TryParse (builder.ToString (), out temp)) return temp;
 				else throw new Exception ("Invalid JSON document.");
 			}
 		}
 
-		static void __JsonInnerDeserializeObjectFromJson (BlockarObject blockarObject, TextReader reader)
+		static void __JsonInnerDeserializeObjectFromJson (BlockarObject blockarObject, TextReader reader, StringBuilder stringBuilder, char[] charBuffer)
 		{
 			try
 			{
 				JsonParseState parseState = JsonParseState.Key;
 				Queue<object> tokenStack = new Queue<object> ();
-				StringBuilder stringBuilder = new StringBuilder ();
 
 				while (true)
 				{
+#if !(NET20 || NET35)
+					stringBuilder.Clear ();
+#else
+					stringBuilder.Remove (0, stringBuilder.Length);
+#endif
+
 					char rc = __JsonPassWhitespaces (reader);
 					if (rc == ':')
 					{
@@ -373,28 +374,23 @@ namespace Daramee.Blockar
 					}
 					else if (rc == '"')
 					{
-#if !(NET20 || NET35)
-						stringBuilder.Clear ();
-#else
-						stringBuilder.Remove (0, stringBuilder.Length);
-#endif
-						__JsonGetStringFromString (reader, stringBuilder);
+						__JsonGetStringFromString (reader, stringBuilder, charBuffer);
 						tokenStack.Enqueue (stringBuilder.ToString ());
 					}
 					else if (rc == 't' || rc == 'f' || rc == 'n')
-						tokenStack.Enqueue (__JsonGetKeywordFromString (reader, rc));
+						tokenStack.Enqueue (__JsonGetKeywordFromString (reader, rc, charBuffer));
 					else if ((rc >= '0' && rc <= '9') || rc == '-' || rc == '+')
-						tokenStack.Enqueue (__JsonGetNumberFromString (reader, rc));
+						tokenStack.Enqueue (__JsonGetNumberFromString (reader, rc, stringBuilder));
 					else if (rc == '{')
 					{
 						BlockarObject inner = new BlockarObject ();
-						__JsonInnerDeserializeObjectFromJson (inner, reader);
+						__JsonInnerDeserializeObjectFromJson (inner, reader, stringBuilder, charBuffer);
 						tokenStack.Enqueue (inner);
 					}
 					else if (rc == '[')
 					{
 						List<object> inner = new List<object> ();
-						InnerDeserializeArrayFromJson (inner, reader);
+						InnerDeserializeArrayFromJson (inner, reader, stringBuilder, charBuffer);
 						tokenStack.Enqueue (inner);
 					}
 					else if (rc == '}')
@@ -408,7 +404,7 @@ namespace Daramee.Blockar
 				if (tokenStack.Count % 2 != 0)
 					throw new ArgumentException ("Invalid JSON document.");
 
-				while(tokenStack.Count != 0)
+				while (tokenStack.Count != 0)
 				{
 					string key = tokenStack.Dequeue () as string;
 					object value = tokenStack.Dequeue ();
@@ -418,15 +414,20 @@ namespace Daramee.Blockar
 			catch (Exception ex) { throw new ArgumentException ("Invalid JSON document.", ex); }
 		}
 
-		static void InnerDeserializeArrayFromJson (List<object> arr, TextReader reader)
+		static void InnerDeserializeArrayFromJson (List<object> arr, TextReader reader, StringBuilder stringBuilder, char[] charBuffer)
 		{
 			try
 			{
 				JsonParseState parseState = JsonParseState.None;
-				StringBuilder stringBuilder = new StringBuilder ();
 
 				while (true)
 				{
+#if !(NET20 || NET35)
+					stringBuilder.Clear ();
+#else
+					stringBuilder.Remove (0, stringBuilder.Length);
+#endif
+
 					char rc = __JsonPassWhitespaces (reader);
 					if (rc == ',')
 					{
@@ -436,12 +437,7 @@ namespace Daramee.Blockar
 					{
 						if (parseState != JsonParseState.None)
 							throw new Exception ("Invalid JSON Document.");
-#if !(NET20 || NET35)
-						stringBuilder.Clear ();
-#else
-						stringBuilder.Remove (0, stringBuilder.Length);
-#endif
-						__JsonGetStringFromString (reader, stringBuilder);
+						__JsonGetStringFromString (reader, stringBuilder, charBuffer);
 						arr.Add (stringBuilder.ToString ());
 						parseState = JsonParseState.Value;
 					}
@@ -449,14 +445,14 @@ namespace Daramee.Blockar
 					{
 						if (parseState != JsonParseState.None)
 							throw new Exception ("Invalid JSON Document.");
-						arr.Add (__JsonGetKeywordFromString (reader, rc));
+						arr.Add (__JsonGetKeywordFromString (reader, rc, charBuffer));
 						parseState = JsonParseState.Value;
 					}
 					else if ((rc >= '0' && rc <= '9') || rc == '-' || rc == '+')
 					{
 						if (parseState != JsonParseState.None)
 							throw new Exception ("Invalid JSON Document.");
-						arr.Add (__JsonGetNumberFromString (reader, rc));
+						arr.Add (__JsonGetNumberFromString (reader, rc, stringBuilder));
 						parseState = JsonParseState.Value;
 					}
 					else if (rc == '{')
@@ -464,7 +460,7 @@ namespace Daramee.Blockar
 						if (parseState != JsonParseState.None)
 							throw new Exception ("Invalid JSON Document.");
 						BlockarObject inner = new BlockarObject ();
-						__JsonInnerDeserializeObjectFromJson (inner, reader);
+						__JsonInnerDeserializeObjectFromJson (inner, reader, stringBuilder, charBuffer);
 						arr.Add (inner);
 						parseState = JsonParseState.Value;
 					}
@@ -473,7 +469,7 @@ namespace Daramee.Blockar
 						if (parseState != JsonParseState.None)
 							throw new Exception ("Invalid JSON Document.");
 						List<object> inner = new List<object> ();
-						InnerDeserializeArrayFromJson (inner, reader);
+						InnerDeserializeArrayFromJson (inner, reader, stringBuilder, charBuffer);
 						arr.Add (inner);
 						parseState = JsonParseState.Value;
 					}

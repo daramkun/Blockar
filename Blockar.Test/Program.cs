@@ -64,7 +64,7 @@ namespace Blockar.Test
 			Console.WriteLine ("Blockar: {0}s per {1}", stopwatch.Elapsed.TotalSeconds, LOOP_COUNT);
 			stopwatch.Stop ();
 
-			stopwatch.Restart ();
+			/*stopwatch.Restart ();
 			var jsonDotNetSerializer = Newtonsoft.Json.JsonSerializer.CreateDefault ();
 			for (int i = 0; i < LOOP_COUNT; ++i)
 			{
@@ -72,8 +72,7 @@ namespace Blockar.Test
 					jsonDotNetSerializer.Deserialize (reader, null);
 			}
 			Console.WriteLine ("Newtonsoft.Json: {0}s per {1}", stopwatch.Elapsed.TotalSeconds, LOOP_COUNT);
-			stopwatch.Stop ();
-
+			stopwatch.Stop ();*/
 		}
 
 		static void Main (string [] args)
