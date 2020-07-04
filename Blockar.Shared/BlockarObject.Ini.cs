@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -84,11 +85,11 @@ namespace Daramee.Blockar
 			// String
 			else if (type == typeof (string))
 			{
-				string objStr = obj as string;
+				var objStr = obj as string;
 				if (__IniIsContainsInvalidStringCharacter (objStr))
 				{
-					StringBuilder builder = new StringBuilder ("\"");
-					foreach (char ch in obj as string)
+					var builder = new StringBuilder ("\"");
+					foreach (var ch in (string) obj)
 					{
 						if (ch <= 127 && !char.IsControl (ch))
 						{
@@ -96,16 +97,21 @@ namespace Daramee.Blockar
 								builder.Append ('\\');
 							builder.Append (ch);
 						}
-						else if (ch == '\t')
-							builder.Append ("\\t");
-						else if (ch == '\n')
-							builder.Append ("\\n");
-						else if (ch == '\r')
-							builder.Append ("\\r");
-						else
+						else switch (ch)
 						{
-							builder.Append ("\\u");
-							builder.Append ($"{ch:X}".PadLeft (4, '0'));
+							case '\t':
+								builder.Append ("\\t");
+								break;
+							case '\n':
+								builder.Append ("\\n");
+								break;
+							case '\r':
+								builder.Append ("\\r");
+								break;
+							default:
+								builder.Append ("\\u");
+								builder.Append ($"{(int)ch:X}".PadLeft (4, '0'));
+								break;
 						}
 					}
 					writer.Write (builder.Append ("\"").ToString ());
@@ -117,20 +123,22 @@ namespace Daramee.Blockar
 
 		static bool __IniIsContainsInvalidStringCharacter (string str)
 		{
-			foreach(char ch in str)
+			foreach (char ch in str)
 			{
 				if (ch == '\r' || ch == '\n' || ch == ';')
 					return true;
 			}
 			return false;
 		}
-#endregion
+		#endregion
 
-#region Deserialization
+		#region Deserialization
+
 		/// <summary>
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="stream">JSON 데이터가 보관된 Stream 객체</param>
+		/// <param name="sectionName">섹션 이름</param>
 		public static BlockarObject DeserializeFromIni (Stream stream, string sectionName)
 		{
 #if NET20 || NET35
@@ -155,6 +163,7 @@ namespace Daramee.Blockar
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="ini">JSON 문자열</param>
+		/// <param name="sectionName">섹션 이름</param>
 		public static BlockarObject DeserializeFromIni (string ini, string sectionName)
 		{
 			TextReader reader = new StringReader (ini);
@@ -171,14 +180,10 @@ namespace Daramee.Blockar
 		/// JSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
 		/// <param name="reader">JSON 데이터를 읽어올 수 있는 TextReader 객체</param>
+		/// <param name="sectionName">섹션 이름</param>
 		public static BlockarObject DeserializeFromIni (TextReader reader, string sectionName)
 		{
-			foreach(var obj in DeserializeFromIni (reader))
-			{
-				if (sectionName == null || sectionName == obj.SectionName)
-					return obj;
-			}
-			return null;
+			return DeserializeFromIni(reader).FirstOrDefault(obj => sectionName == null || sectionName == obj.SectionName);
 		}
 
 		public static IEnumerable<BlockarObject> DeserializeFromIni (TextReader reader)
@@ -199,19 +204,24 @@ namespace Daramee.Blockar
 					if (ch != ' ' && ch != '\t' && ch != '\a' && ch != '\r')
 						break;
 				}
-				if (line [i] == ';') continue;
-				else if (line [i] == '[')
+				switch (line [i])
 				{
-					if (obj.Count > 0)
-						yield return obj;
-					obj = new BlockarObject ();
-					obj.SectionName = __IniGetSectionTitle (line, i + 1);
-				}
-				else
-				{
-					string key = __IniGetKey (line, ref i);
-					string value = __IniGetValue (line, i);
-					obj.Set (key, value);
+					case ';':
+						continue;
+					case '[':
+						{
+							if (obj.Count > 0)
+								yield return obj;
+							obj = new BlockarObject {SectionName = __IniGetSectionTitle(line, i + 1)};
+							break;
+						}
+					default:
+						{
+							var key = __IniGetKey (line, ref i);
+							var value = __IniGetValue (line, i);
+							obj.Set (key, value);
+							break;
+						}
 				}
 			}
 			yield return obj;
@@ -238,10 +248,10 @@ namespace Daramee.Blockar
 		{
 			if (line.Length == startIndex) return "";
 
-			StringBuilder sb = new StringBuilder ();
+			var sb = new StringBuilder ();
 			for (; startIndex < line.Length; ++startIndex)
 			{
-				char ch = line [startIndex];
+				var ch = line [startIndex];
 				if (ch != ' ' && ch != '	' && ch != '\a' && ch != '\r')
 					break;
 			}
@@ -258,6 +268,6 @@ namespace Daramee.Blockar
 			}
 			return sb.ToString ().Trim ();
 		}
-#endregion
+		#endregion
 	}
 }

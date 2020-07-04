@@ -12,16 +12,16 @@ namespace Daramee.Blockar
 #endif
 	public class FieldOptionAttribute : Attribute
 	{
-		string name;
+		string _name;
 
 		public string Name
 		{
-			get => name;
+			get => _name;
 			set
 			{
 				if (!Regex.IsMatch (value, "[a-zA-Z0-9가-힣\\-_ %@#!&^*+/~`]*"))
 					throw new ArgumentException ();
-				name = value;
+				_name = value;
 			}
 		}
 		public bool IsRequired { get; set; }

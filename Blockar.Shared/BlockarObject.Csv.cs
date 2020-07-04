@@ -16,9 +16,9 @@ namespace Daramee.Blockar
 		public static void SerializeToCsv (Stream stream, char separator = ',', params BlockarObject [] objs)
 		{
 #if NET20 || NET35
-			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8))
+			using (var writer = new StreamWriter (stream, Encoding.UTF8))
 #else
-			using (StreamWriter writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
+			using (var writer = new StreamWriter (stream, Encoding.UTF8, 4096, true))
 #endif
 			{
 				SerializeToCsv (writer, separator, objs);
@@ -48,7 +48,7 @@ namespace Daramee.Blockar
 
 		public static void SerializeToCsv (TextWriter writer, char separator = ',', params BlockarObject [] objs)
 		{
-			List<string> columnNames = new List<string> ();
+			var columnNames = new List<string> ();
 			foreach (var obj in objs)
 			{
 				// Column Names Row (First Row)
@@ -68,11 +68,12 @@ namespace Daramee.Blockar
 
 				// Columns Row
 				{
-					bool isFirst = true;
-					for (int i = 0; i < obj.Count; ++i)
+					var isFirst = true;
+					for (var i = 0; i < obj.Count; ++i)
 					{
 						if (!isFirst)
 							writer.Write (separator);
+						isFirst = false;
 						var currentColumnName = columnNames [i];
 						writer.Write (SafeText (obj.Get (currentColumnName).ToString (), separator));
 					}
@@ -83,40 +84,48 @@ namespace Daramee.Blockar
 #endregion
 
 #region Deserialization
-		public static IEnumerable<BlockarObject> DeserializeFromCsv (Stream stream, char separator = CsvSeparatorDetectorCharacter)
+		public static IEnumerable<BlockarObject> DeserializeFromCsv (Stream stream, bool requireTitleRow = true, char separator = CsvSeparatorDetectorCharacter)
 		{
 #if NET20 || NET35
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true);
 #else
 			TextReader reader = new StreamReader (stream, Encoding.UTF8, true, 4096, true);
 #endif
-			return DeserializeFromCsv (reader, separator);
+			return DeserializeFromCsv (reader, requireTitleRow, separator);
 		}
 
-		public static IEnumerable<BlockarObject> DeserializeFromCsv (string csv, char separator = CsvSeparatorDetectorCharacter)
+		public static IEnumerable<BlockarObject> DeserializeFromCsv (string csv, bool requireTitleRow = true, char separator = CsvSeparatorDetectorCharacter)
 		{
 			TextReader reader = new StringReader (csv);
-			return DeserializeFromCsv (reader, separator);
+			return DeserializeFromCsv (reader, requireTitleRow, separator);
 		}
 
-		public static IEnumerable<BlockarObject> DeserializeFromCsv (TextReader reader, char separator = CsvSeparatorDetectorCharacter)
+		public static IEnumerable<BlockarObject> DeserializeFromCsv (TextReader reader, bool requireTitleRow = true, char separator = CsvSeparatorDetectorCharacter)
 		{
-			string columnNameRow = reader.ReadLine ();
+			List<string> columnNames;
 			if (separator == CsvSeparatorDetectorCharacter)
 			{
+				var columnNameRow = reader.ReadLine ();
+				if (requireTitleRow)
+				{
 #if NET20 || NET35
 				if (columnNameRow.IndexOf (',') >= 0) separator = ',';
 				else if (columnNameRow.IndexOf ('\t') >= 0) separator = '\t';
 				else if (columnNameRow.IndexOf ('|') >= 0) separator = '|';
 #else
-				if (columnNameRow.Contains (',')) separator = ',';
-				else if (columnNameRow.Contains ('\t')) separator = '\t';
-				else if (columnNameRow.Contains ('|')) separator = '|';
+					if (columnNameRow.Contains (',')) separator = ',';
+					else if (columnNameRow.Contains ('\t')) separator = '\t';
+					else if (columnNameRow.Contains ('|')) separator = '|';
 #endif
-				else throw new ArgumentException ("Unknown Separator.");
-			}
+					else throw new ArgumentException ("Unknown Separator.");
+				}
+				else
+					throw new ArgumentException ("Cannot Separator Detection Non-required Title row.");
 
-			List<string> columnNames = new List<string> (columnNameRow.Split (separator));
+				columnNames = new List<string> (columnNameRow.Split (separator));
+			}
+			else
+				columnNames = new List<string> ();
 
 			BlockarObject obj = null;
 			CsvDeserializeState state = CsvDeserializeState.StartRow;
@@ -141,25 +150,27 @@ namespace Daramee.Blockar
 					case CsvDeserializeState.StartColumn:
 						{
 							ch = (char) reader.Read ();
-							if (ch == '"')
+							switch (ch)
 							{
-								state = CsvDeserializeState.WrappedColumning;
-							}
-							else if (ch == '\r')
-								continue;
-							else if (ch == '\n')
-							{
-								if (obj.Count != 0)
-								{
-									yield return obj;
-									obj = null;
-								}
-								state = CsvDeserializeState.StartRow;
-							}
-							else
-							{
-								state = CsvDeserializeState.Columning;
-								builder.Append (ch);
+								case '"':
+									state = CsvDeserializeState.WrappedColumning;
+									break;
+								case '\r':
+									continue;
+								case '\n':
+									{
+										if (obj.Count != 0)
+										{
+											yield return obj;
+											obj = null;
+										}
+										state = CsvDeserializeState.StartRow;
+										break;
+									}
+								default:
+									state = CsvDeserializeState.Columning;
+									builder.Append (ch);
+									break;
 							}
 						}
 						break;
@@ -208,6 +219,8 @@ namespace Daramee.Blockar
 
 					case CsvDeserializeState.EndColumn:
 						{
+							if (!requireTitleRow && columnNames.Count <= columnNumber)
+								columnNames.Add ((columnNumber + 1).ToString ());
 							obj.Set (columnNames [columnNumber], builder.ToString ());
 #if NET20 || NET35
 							builder = new StringBuilder ();

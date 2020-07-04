@@ -29,60 +29,59 @@ namespace Daramee.Blockar
 
 		static BSONType __BsonGetValueType (object obj)
 		{
-			if (obj == null) return BSONType.Null;
+			if (obj == null)
+				return BSONType.Null;
 
-			Type type = obj.GetType ();
+			var type = obj.GetType ();
 
-			if (type.IsArray) return BSONType.Array;
-			else if (typeof (double) == type || typeof (float) == type || typeof (decimal) == type)
-				return BSONType.Double;
-			else if (typeof (int) == type || typeof (short) == type || typeof (ushort) == type
-				|| typeof (byte) == type || typeof (sbyte) == type)
-				return BSONType.Integer;
-			else if (typeof (long) == type || typeof (ulong) == type || typeof (uint) == type)
-				return BSONType.Integer64;
-			else if (typeof (string) == type)
-				return BSONType.String;
-			else if (typeof (DateTime) == type || typeof (TimeSpan) == type)
-				return BSONType.UTCTime;
-			else if (typeof (bool) == type)
-				return BSONType.Boolean;
-			else if (typeof (Regex) == type)
-				return BSONType.Regexp;
-			else if (typeof (byte []) == type)
-				return BSONType.BinaryData;
-			else
-				return BSONType.Document;
+			return type.IsArray ? BSONType.Array :
+				typeof(double) == type || typeof(float) == type || typeof(decimal) == type ? BSONType.Double :
+				typeof(int) == type || typeof(short) == type || typeof(ushort) == type
+				|| typeof(byte) == type || typeof(sbyte) == type ? BSONType.Integer :
+				typeof(long) == type || typeof(ulong) == type || typeof(uint) == type ? BSONType.Integer64 :
+				typeof(string) == type ? BSONType.String :
+				typeof(DateTime) == type || typeof(TimeSpan) == type ? BSONType.UTCTime :
+				typeof(bool) == type ? BSONType.Boolean :
+				typeof(Regex) == type ? BSONType.Regexp :
+				typeof(byte[]) == type ? BSONType.BinaryData :
+				BSONType.Document;
 		}
 
 		static byte [] __BsonGetBinaryKey (object key)
 		{
-			if (key is int) return new byte [] { (byte) (int) (object) key };
-			else if (key is string)
+			switch (key)
 			{
-				MemoryStream s = new MemoryStream ();
-				BinaryWriter w = new BinaryWriter (s);
-				w.Write ((key as string).Length + 1);
-				w.Write (Encoding.UTF8.GetBytes (key as string));
-				w.Write ((byte) 0);
-				byte [] temp = s.ToArray ();
-				s.Dispose ();
-				return temp;
+				case int i:
+					return new[] { (byte) i };
+				case string key1:
+					{
+						var s = new MemoryStream ();
+						var w = new BinaryWriter (s);
+						w.Write (key1.Length + 1);
+						w.Write (Encoding.UTF8.GetBytes (key1));
+						w.Write ((byte) 0);
+						var temp = s.ToArray ();
+						s.Dispose ();
+						return temp;
+					}
+				default:
+					throw new ArgumentException ("key type must be 'int' or 'string'.");
 			}
-			else throw new ArgumentException ("key type must be 'int' or 'string'.");
 		}
 
 		#region Serialization
+
 		/// <summary>
 		/// BSON 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="stream">직렬화한 데이터를 보관할 Stream 객체</param>
+		/// <param name="obj">직렬화할 데이터</param>
 		public static void SerializeToBson (Stream stream, BlockarObject obj)
 		{
 #if NET20 || NET35
-			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8))
+			using (var writer = new BinaryWriter (stream, Encoding.UTF8))
 #else
-			using (BinaryWriter writer = new BinaryWriter (stream, Encoding.UTF8, true))
+			using (var writer = new BinaryWriter (stream, Encoding.UTF8, true))
 #endif
 			{
 				SerializeToBson (writer, obj);
@@ -98,7 +97,7 @@ namespace Daramee.Blockar
 			using (Stream stream = new MemoryStream ())
 			{
 				SerializeToBson (stream, this);
-				return (stream as MemoryStream).ToArray ();
+				return ((MemoryStream) stream).ToArray ();
 			}
 		}
 
@@ -106,6 +105,7 @@ namespace Daramee.Blockar
 		/// JSON 포맷으로 직렬화한다.
 		/// </summary>
 		/// <param name="writer">직렬화한 데이터를 보관할 TextWriter 객체</param>
+		/// <param name="obj">직렬화할 데이터</param>
 		public static void SerializeToBson (BinaryWriter writer, BlockarObject obj)
 		{
 			writer.Write (0);
@@ -130,8 +130,8 @@ namespace Daramee.Blockar
 					{
 						writer.Write (0);
 						var arr = obj as IEnumerable;
-						int count = 0;
-						foreach (object arrObj in arr)
+						var count = 0;
+						foreach (var arrObj in arr)
 							__BsonObjectToWriter (writer, count++, arrObj);
 					}
 					break;
@@ -148,33 +148,38 @@ namespace Daramee.Blockar
 				case BSONType.JavascriptCode:
 				case BSONType.Regexp:
 					{
-						byte [] data = Encoding.UTF8.GetBytes (obj.ToString ());
+						var data = Encoding.UTF8.GetBytes (obj.ToString ());
 						writer.Write (data.Length + 1);
 						writer.Write (data);
 						writer.Write ((byte) 0);
 					}
 					break;
 				case BSONType.UTCTime:
-					if (obj is DateTime)
-						writer.Write (((DateTime) obj).ToFileTimeUtc ());
-					else if (obj is TimeSpan)
-						writer.Write (new DateTime (((TimeSpan) obj).Ticks).ToFileTimeUtc ());
+					switch (obj)
+					{
+						case DateTime dateTime:
+							writer.Write (dateTime.ToFileTimeUtc ());
+							break;
+						case TimeSpan timeSpan:
+							writer.Write (new DateTime (timeSpan.Ticks).ToFileTimeUtc ());
+							break;
+					}
 					break;
 				case BSONType.Boolean:
 					writer.Write (Convert.ToBoolean (obj));
 					break;
 				case BSONType.BinaryData:
 					{
-						byte [] data = obj as byte [];
+						var data = obj as byte [];
 						writer.Write (data.Length);
 						writer.Write (data);
 					}
 					break;
 			}
 		}
-#endregion
+		#endregion
 
-#region Deserialization
+		#region Deserialization
 		/// <summary>
 		/// BSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
@@ -182,9 +187,9 @@ namespace Daramee.Blockar
 		public static BlockarObject DeserializeFromBson (Stream stream)
 		{
 #if NET20 || NET35
-			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8))
+			using (var reader = new BinaryReader (stream, Encoding.UTF8))
 #else
-			using (BinaryReader reader = new BinaryReader (stream, Encoding.UTF8, true))
+			using (var reader = new BinaryReader (stream, Encoding.UTF8, true))
 #endif
 				return DeserializeFromBson (reader);
 		}
@@ -192,10 +197,10 @@ namespace Daramee.Blockar
 		/// <summary>
 		/// BSON 포맷에서 직렬화를 해제한다.
 		/// </summary>
-		/// <param name="json">BSON 바이트 배열</param>
+		/// <param name="bsonArray">BSON 바이트 배열</param>
 		public static BlockarObject DeserializeFromBson (byte [] bsonArray)
 		{
-			using (Stream stream = new MemoryStream (bsonArray))
+			using (var stream = new MemoryStream (bsonArray))
 				return DeserializeFromJson (stream);
 		}
 
@@ -205,7 +210,7 @@ namespace Daramee.Blockar
 		/// <param name="reader">BSON 데이터를 읽어올 수 있는 BinaryReader 객체</param>
 		public static BlockarObject DeserializeFromBson (BinaryReader reader)
 		{
-			BlockarObject obj = new BlockarObject ();
+			var obj = new BlockarObject ();
 			__BsonParseBsonObject (obj, reader);
 			return obj;
 		}
@@ -214,13 +219,13 @@ namespace Daramee.Blockar
 		{
 			try
 			{
-				Queue<object> tokenStack = new Queue<object> ();
-				bool isParsing = true;
-				int dataSize = reader.ReadInt32 ();
-				int currentPosition = (int) reader.BaseStream.Position;
+				var tokenStack = new Queue<object> ();
+				var isParsing = true;
+				var dataSize = reader.ReadInt32 ();
+				var currentPosition = (int) reader.BaseStream.Position;
 				while (isParsing && (reader.BaseStream.Position - currentPosition) != dataSize)
 				{
-					BSONType rb = (BSONType) reader.ReadByte ();
+					var rb = (BSONType) reader.ReadByte ();
 					if (rb == BSONType.EndDoc) break;
 
 					tokenStack.Enqueue (__BsonGetKeyFromBinary (reader));
@@ -231,20 +236,20 @@ namespace Daramee.Blockar
 						case BSONType.String: tokenStack.Enqueue (__BsonGetStringFromBinary (reader)); break;
 						case BSONType.Document:
 							{
-								BlockarObject inner = new BlockarObject ();
+								var inner = new BlockarObject ();
 								__BsonParseBsonObject (inner, reader);
 								tokenStack.Enqueue (inner);
 							}
 							break;
 						case BSONType.Array:
 							{
-								List<object> arr = new List<object> ();
+								var arr = new List<object> ();
 								__BsonParseBsonArray (arr, reader);
 								tokenStack.Enqueue (arr.ToArray ());
 							}
 							break;
 						case BSONType.BinaryData: tokenStack.Enqueue (__BsonGetBinaryFromBinary (reader)); break;
-						case BSONType.Boolean: tokenStack.Enqueue (reader.ReadByte () == 0 ? false : true); break;
+						case BSONType.Boolean: tokenStack.Enqueue (reader.ReadByte () != 0); break;
 						case BSONType.UTCTime: tokenStack.Enqueue (DateTime.FromFileTimeUtc (reader.ReadInt64 ())); break;
 						case BSONType.Null: tokenStack.Enqueue (null); break;
 						case BSONType.Regexp: tokenStack.Enqueue (new Regex (__BsonGetStringFromBinary (reader))); break;
@@ -303,7 +308,7 @@ namespace Daramee.Blockar
 							}
 							break;
 						case BSONType.BinaryData: arr.Add (__BsonGetBinaryFromBinary (reader)); break;
-						case BSONType.Boolean: arr.Add (reader.ReadByte () == 0 ? false : true); break;
+						case BSONType.Boolean: arr.Add (reader.ReadByte () != 0); break;
 						case BSONType.UTCTime: arr.Add (DateTime.FromFileTimeUtc (reader.ReadInt64 ())); break;
 						case BSONType.Null: arr.Add (null); break;
 						case BSONType.Regexp: arr.Add (new Regex (__BsonGetStringFromBinary (reader))); break;
@@ -320,7 +325,7 @@ namespace Daramee.Blockar
 
 		static string __BsonGetKeyFromBinary (BinaryReader jsonBinary)
 		{
-			StringBuilder sb = new StringBuilder ();
+			var sb = new StringBuilder ();
 			char ch;
 			while ((ch = jsonBinary.ReadChar ()) != '\0')
 				sb.Append (ch);
@@ -329,15 +334,15 @@ namespace Daramee.Blockar
 
 		static string __BsonGetStringFromBinary (BinaryReader jsonBinary)
 		{
-			int length = jsonBinary.ReadInt32 ();
+			var length = jsonBinary.ReadInt32 ();
 			return Encoding.UTF8.GetString (jsonBinary.ReadBytes (length), 0, length - 1);
 		}
 
 		static byte [] __BsonGetBinaryFromBinary (BinaryReader jsonBinary)
 		{
-			int length = jsonBinary.ReadInt32 ();
+			var length = jsonBinary.ReadInt32 ();
 			return jsonBinary.ReadBytes (length);
 		}
-#endregion
+		#endregion
 	}
 }

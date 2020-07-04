@@ -7,7 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blockar", "Blockar\Blockar.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blockar.Test", "Blockar.Test\Blockar.Test.csproj", "{3F801481-F6C4-4F13-A7EA-3322F9AA4632}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Blockar.Shared", "Blockar.Shared\Blockar.Shared.shproj", "{24EDA730-617F-409E-BA4A-336B44151438}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Blockar.Shared\Blockar.Shared.projitems*{24eda730-617f-409e-ba4a-336b44151438}*SharedItemsImports = 13
+		Blockar.Shared\Blockar.Shared.projitems*{f3271f50-9199-41e0-add5-0d852df1f15f}*SharedItemsImports = 5
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
