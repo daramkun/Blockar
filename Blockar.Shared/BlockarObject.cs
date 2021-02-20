@@ -5,9 +5,11 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Daramee.Blockar
 {
@@ -134,7 +136,7 @@ namespace Daramee.Blockar
 				where obj.Key.Equals(key)
 				select obj.Value
 				into value
-				let valueType = value.GetType()
+				let valueType = value?.GetType()
 				select value)
 			{
 				return ValueConverter.ValueConvert(value, type);
@@ -199,6 +201,9 @@ namespace Daramee.Blockar
 				      || member.MemberType == MemberTypes.Field))
 					continue;
 
+				if (member.DeclaringType != type)
+					continue;
+
 				if ((member.MemberType == MemberTypes.Property &&
 				     ((PropertyInfo) member).GetAccessors().Any(x => x.IsStatic)) ||
 				    (member.MemberType == MemberTypes.Field && ((FieldInfo) member).IsStatic))
@@ -260,6 +265,9 @@ namespace Daramee.Blockar
 
 		public static BlockarObject FromObject(Type type, object obj)
 		{
+			if (obj is BlockarObject)
+				return obj as BlockarObject;
+
 			var bo = new BlockarObject();
 
 			if (obj is ICustomObjectConverter converter)
@@ -283,10 +291,15 @@ namespace Daramee.Blockar
 					: null;
 
 				var name = fieldOption?.Name ?? member.Name;
-				bo.Set(name,
-					member.MemberType == MemberTypes.Property
+				var value = member.MemberType == MemberTypes.Property
 						? (member as PropertyInfo)?.GetValue(obj, null)
-						: (member as FieldInfo)?.GetValue(obj));
+						: (member as FieldInfo)?.GetValue(obj);
+				if (!(value is byte || value is sbyte || value is short || value is ushort ||
+					value is int || value is uint || value is long || value is ulong || value is float || value is double ||
+					value is bool || value is string || value is DateTime || value is Regex || value is TimeSpan ||
+					value is decimal || value is CultureInfo || value is char || value is Enum) && value != null)
+					value = FromObject(value.GetType(), value);
+				bo.Set(name, value);
 			}
 
 			return bo;
@@ -322,7 +335,7 @@ namespace Daramee.Blockar
 			var builder = new StringBuilder();
 			builder.Append('{');
 			foreach (var kv in objs)
-				builder.Append(kv.Key).Append(':').Append(kv.Value).Append(',');
+				builder.Append(kv.Key).Append(':').Append(kv.Value ?? "null").Append(',');
 			if (builder.Length > 1)
 				builder.Remove(builder.Length - 1, 1);
 			builder.Append('}');

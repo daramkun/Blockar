@@ -68,6 +68,12 @@ namespace Daramee.Blockar
 
 		static void __JsonObjectToWriter(TextWriter writer, object obj)
 		{
+			if (obj == null)
+			{
+				writer.Write("null");
+				return;
+			}
+
 			Type type = obj.GetType();
 			// Integers
 			if (type == typeof(byte) || type == typeof(sbyte) || type == typeof(short)
@@ -123,6 +129,10 @@ namespace Daramee.Blockar
 
 				writer.Write(builder.Append("\"").ToString());
 			}
+			else if (obj is BlockarObject blockarObject)
+			{
+				SerializeToJson(writer, blockarObject);
+			}
 			// BlockarObject compatible Dictionary
 			else if (obj is IDictionary<string, object> dictionary)
 			{
@@ -160,10 +170,6 @@ namespace Daramee.Blockar
 				}
 
 				writer.Write(']');
-			}
-			else if (obj is BlockarObject blockarObject)
-			{
-				SerializeToJson(writer, blockarObject);
 			}
 			// Any Object
 			else
@@ -208,6 +214,9 @@ namespace Daramee.Blockar
 		{
 			BlockarObject obj = new BlockarObject();
 			char rc = __JsonPassWhitespaces(reader);
+			if (rc == 0xffff)
+				return obj;
+
 			if (rc == '{')
 			{
 				StringBuilder stringBuilder = new StringBuilder(4096);
